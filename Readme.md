@@ -2,13 +2,40 @@
 
 ## Pre-Requisits:
 - A server which functions as the backend (e.g. Linode or AWS EC2). Ideally, set up remote access via ssh.
-- git installed
+- Where git is installed
 - install docker: https://docs.docker.com/engine/install/debian/ and docker-compose: https://docs.docker.com/compose/install/. To understand what our docker files are doing, go to https://rollout.io/blog/using-docker-compose-for-python-development/
+- nginx installed via `sudo apt-get install nginx`
 - python v3.7 or higher. Check with "python --version" that it indeed runs 3.x.x and not 2.7.x
 - postgres for database storage, installation via: 
 - python packages, installation with requirements.txt
 
 ## First time start:
+1. Get code via `cd ~ ` and `git clone https://github.com/JoelGotsch/Kantnprojekt_Backend.git`. Alternatively, for easier development you can create ssh keys on the server and add them to your git repo.\
+You should now have a new folder with your code in there (in this case the folder name is '`Kantnprojekt_Backend`')
+1. Set-up Nginx to connect the public IP adress with localhost:
+    - Create an NGINX Configuration file via `sudo nano /etc/nginx/sites-enabled/flaskapp`
+    - enter the configuration
+  
+            server {
+                    listen 9123;
+                    server_name <Your Linodes IP>;
+
+                    location / {
+                            proxy_pass http://127.0.0.1:8001;
+                            proxy_set_header Host $host;
+                            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                    }
+            }
+
+    - Unlink the NGINX default config
+
+            unlink /etc/nginx/sites-enabled/default
+
+    -  Reload your NGINX server
+
+            sudo nginx -s reload
+
+1. 
 - create virtual env via "python -m venv venv"
 - migrate.py commands to create postgres database
 - start app via ...
