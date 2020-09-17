@@ -11,7 +11,13 @@
 
 ## First time start:
 1. Get code via `cd ~ ` and `git clone https://github.com/JoelGotsch/Kantnprojekt_Backend.git`. Alternatively, for easier development you can create ssh keys on the server and add them to your git repo.\
-You should now have a new folder with your code in there (in this case the folder name is '`Kantnprojekt_Backend`')
+You should now have a new folder with your code in there (in this case the folder name is '`Kantnprojekt_Backend`')\
+**optional:** Test the setup:
+    -  for that, install python3 if needed plus `apt-get install python3-venv`\
+and create the virtual environment via `python3 -m venv venv` which creates the folder venv.
+    - Activate the virtual environment via `source venv/bin/activate`
+    - Run `python app.py` which should start a server on `127.0.0.1:8001/`
+    - test via `curl 127.0.0.1:8001/api/test`
 1. Set-up Nginx to connect the public IP adress with localhost:
     - Create an NGINX Configuration file via `sudo nano /etc/nginx/sites-enabled/flaskapp`
     - enter the configuration

@@ -14,7 +14,7 @@ api.add_resource(Test, "/test")
 def create_app(config_filename):
     app = Flask(__name__)
     app.config.from_object(config_filename)
-    app.register_blueprint(api_bp, url_prefix='/api'+str(__version__))
+    app.register_blueprint(api_bp, url_prefix='/api/'+str(__version__))
 
     from models import db
     db.init_app(app)
