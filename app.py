@@ -1,8 +1,6 @@
 from flask import Blueprint, Flask
 from flask_restful import Api
-from resources.Register import Register
-from resources.Signin import Signin
-from resources.task import Tasks
+
 from resources.Test import Test
 
 api_bp = Blueprint('api', __name__)
