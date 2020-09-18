@@ -3,7 +3,7 @@
 ## Pre-Requisits:
 - A server which functions as the backend (e.g. Linode or AWS EC2). Ideally, set up remote access via ssh.
 - Where git is installed
-- install docker: https://docs.docker.com/engine/install/debian/ and docker-compose: https://docs.docker.com/compose/install/. To understand what our docker files are doing, go to https://rollout.io/blog/using-docker-compose-for-python-development/
+- install docker: https://docs.docker.com/engine/install/debian/ and docker-compose: https://docs.docker.com/compose/install/. 
 - nginx installed via `sudo apt-get install nginx`
 - python v3.7 or higher. Check with "python --version" that it indeed runs 3.x.x and not 2.7.x
 - postgres for database storage, installation via: 
@@ -19,21 +19,21 @@ and create the virtual environment via `python3.8 -m venv venv` which creates th
     - Activate the virtual environment via `source venv/bin/activate`
     - Install requirements via `pip install -r requirements.txt`
     - Run `python app.py` which should start a server on `127.0.0.1:8001/`
-    - test via `curl 127.0.0.1:8001/api/v0_1/test`
+    - test via `curl 127.0.0.1:8001/api/v0_1/test`, this should yield a `"status": "success"` message.
 1. Set-up Nginx to connect the public IP adress with localhost:
-    - Create an NGINX Configuration file via `sudo nano /etc/nginx/sites-enabled/flaskapp`
-    - enter the configuration
+    - Create an NGINX Configuration file via `sudo nano /etc/nginx/sites-enabled/kantnprojekt`
+    - enter the configuration (port 80 is used as it is the standard web port and we can therefore just put in the url later without naming a port). We use port 8002 because the gunicorn WSGI will use that port.
   
-            server {
-                    listen 9123;
-                    server_name <Your Linodes IP>;
+                server {
+                        listen 80;
+                        server_name <Your Linodes IP>;
 
-                    location / {
-                            proxy_pass http://127.0.0.1:8001;
-                            proxy_set_header Host $host;
-                            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                    }
-            }
+                        location / {
+                                proxy_pass http://127.0.0.1:8002;
+                                proxy_set_header Host $host;
+                                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                        }
+                }
 
     - Unlink the NGINX default config
 
@@ -42,9 +42,11 @@ and create the virtual environment via `python3.8 -m venv venv` which creates th
     -  Reload your NGINX server
 
             sudo nginx -s reload
+    **optional**: Test this from your computer via browser "http://\<LinodeIP\>:9123/api/v0_1/test"
+1. Now shifting everything inside a docker container and using gunicorn. To understand what our docker files are doing, go to https://rollout.io/blog/using-docker-compose-for-python-development/:
+   - Here we are
 
-1. 
-- create virtual env via "python -m venv venv"
+2. 
 - migrate.py commands to create postgres database
 - start app via ...
 - test api via ...

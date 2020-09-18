@@ -2,17 +2,20 @@ version: '3'
 services:
   web:
     build: .
-    command: gunicorn -b 0.0.0.0:8000 todosapp.wsgi:application
+    command: gunicorn -b 0.0.0.0:8002 kantnprojekt.wsgi:app
     depends_on:
       - postgres
     volumes:
       - .:/usr/src/app
     ports:
-      - "8000:8000"
+      - "8001:8002"
     environment:
       DATABASE_URL: postgres://kantnprojekt@postgres/kantn
   postgres:
     image: postgres:13-alpine
+    ports:
+      - "5433:5432"
     environment:
       POSTGRES_USER: kantn
       POSTGRES_DB: kantnprojekt
+      POSTGRES_PASSWORD: password
