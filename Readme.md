@@ -42,7 +42,10 @@ and create the virtual environment via `python3.8 -m venv venv` which creates th
     -  Reload your NGINX server
 
             sudo nginx -s reload
-    **optional**: Test this from your computer via browser "http://\<LinodeIP\>:9123/api/v0_1/test"
+    
+        **optional**: Test this from your computer via browser:
+        - Start with  `python wsgi.py` which should start a server on `127.0.0.1:8002/`
+        - "http://\<LinodeIP\>:80/api/v0_1/test" or "http://\<LinodeIP\>/api/v0_1/test"
 1. Now shifting everything inside a docker container and using gunicorn. To understand what our docker files are doing, go to https://rollout.io/blog/using-docker-compose-for-python-development/:
    - Here we are
 
