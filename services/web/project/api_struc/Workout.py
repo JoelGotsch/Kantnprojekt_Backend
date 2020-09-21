@@ -1,10 +1,10 @@
 from flask_restful import Resource
-from flask import request
-from models import db
-import random
-import string
+from flask import request, jsonify
+from models import Workout, Action
+# We need the db object! ahhhhhhhhhh => move it to models.py?! then app needs to import it. is it still the same object if manage.py is then initializing it again when loading models.py? But probably its doing that already anyways..
 
-class Test(Resource):
+
+class Workout(Resource):
     def get(self):
         return { "status" : "success"}, 200
 
@@ -18,3 +18,6 @@ class Test(Resource):
             print(e)
             return(({"status": "failure", "message": "Could not read json or header."}), 400)
         return({ "status": 'success', 'data': result }, 201)
+
+    def delete(self):
+        pass

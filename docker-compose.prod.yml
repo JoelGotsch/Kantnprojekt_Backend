@@ -1,0 +1,45 @@
+# run via docker-compose -f docker-compose.prod.yml up -d --build
+version: '3.7'
+
+services:
+  web:
+    build:
+      context: ./services/web
+      dockerfile: Dockerfile.prod
+    
+    command: gunicorn --bind 0.0.0.0:8002 manage:app
+    depends_on:
+      - postgres
+    # volumes:
+    #   - .:/usr/src/app
+    expose:
+      #has to match with services/nginx/nginx.conf file port in the upstream part
+      - "8002"
+    env_file:
+      - ./.env.prod
+    # environment:
+    #   DATABASE_URL: postgres://kantnprojekt@postgres/kantn
+  postgres:
+    image: postgres:13-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    # I don't know why ports is not needed..
+    # ports:
+    #   # helpful reference: https://docs.docker.com/compose/networking/
+    #   - "5433:5432"
+    env_file:
+      - ./.env.postgres.prod
+    # environment:
+    #   POSTGRES_USER: kantn
+    #   POSTGRES_DB: kantnprojekt
+    #   POSTGRES_PASSWORD: password
+  nginx:
+      build: ./services/nginx
+      ports:
+        # the second port (=Container_Port) has to match  with services/nginx/nginx.conf file port in the server part
+        # the first port (=Host_Port) will be the one exposed to the server
+        - "8003:8001"
+      depends_on:
+        - web
+volumes:
+  postgres_data:
