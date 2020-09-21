@@ -1,14 +1,9 @@
 from flask.cli import FlaskGroup
 import datetime
 import os
+from debugger import initialize_flask_server_debugger_if_needed
 
-# from app import create_app 
-print("Folders in current working directory:")
-for fd in os.walk(os.getcwd()):
-    print(str(fd)+ ", ")
-print("Folders in current file env:")
-for fd in os.walk(os.path.dirname(os.path.realpath(__file__))):
-    print(str(fd)+ ", ")
+initialize_flask_server_debugger_if_needed()
 from project import app, db
 from project.api_struc.models import User, Exercise, Workout, Action, Challenge, UserChallenge
 

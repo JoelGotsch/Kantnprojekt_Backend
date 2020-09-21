@@ -1,14 +1,61 @@
 version: '3.4'
 
+# services:
+#   kantnprojektbackend:
+#     image: kantnprojektbackend
+#     build:
+#       context: .
+#       dockerfile: Dockerfile
+#     command: ["sh", "-c", "pip install debugpy -t /tmp && python /tmp/debugpy --wait-for-client --listen 0.0.0.0:5678 -m flask run --no-debugger --no-reload --host 0.0.0.0 --port 8002"]
+#     ports:
+#       - 8002:8002
+#       - 5678:5678
+#     environment:
+#       - FLASK_APP=manage.py
+
 services:
-  kantnprojektbackend:
-    image: kantnprojektbackend
+  web:
     build:
-      context: .
-      dockerfile: Dockerfile
-    command: ["sh", "-c", "pip install debugpy -t /tmp && python /tmp/debugpy --wait-for-client --listen 0.0.0.0:5678 -m flask run --no-debugger --no-reload --host 0.0.0.0 --port 8002"]
+      context: ./services/web
+      dockerfile: Dockerfile.debug
+    
+    command: gunicorn --bind 0.0.0.0:8002 manage:app
+    # command: ["sh", "-c", "pip install debugpy -t /tmp && python /tmp/debugpy --wait-for-client --listen 0.0.0.0:5678 -m flask run --no-debugger --no-reload --host 0.0.0.0 --port 8002"]
+    depends_on:
+      - postgres
+    # volumes:
+    #   - .:/usr/src/app
+    expose:
+      #has to match with services/nginx/nginx.conf file port in the upstream part
+      - "8002"
     ports:
-      - 8002:8002
-      - 5678:5678
-    environment:
-      - FLASK_APP=manage.py
+      #for debugging vs code needs a port opened:
+      - "10001:10001"
+    env_file:
+      - ./.env.debug
+    # environment:
+    #   DATABASE_URL: postgres://kantnprojekt@postgres/kantn
+  postgres:
+    image: postgres:13-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    # I don't know why ports is not needed..
+    # ports:
+    #   # helpful reference: https://docs.docker.com/compose/networking/
+    #   - "5433:5432"
+    env_file:
+      - ./.env.postgres.prod
+    # environment:
+    #   POSTGRES_USER: kantn
+    #   POSTGRES_DB: kantnprojekt
+    #   POSTGRES_PASSWORD: password
+  nginx:
+      build: ./services/nginx
+      ports:
+        # the second port (=Container_Port) has to match  with services/nginx/nginx.conf file port in the server part
+        # the first port (=Host_Port) will be the one exposed to the server
+        - "8003:8001"
+      depends_on:
+        - web
+volumes:
+  postgres_data:
