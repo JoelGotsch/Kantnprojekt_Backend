@@ -3,6 +3,8 @@ from flask_restful import Api
 # from flask_sqlalchemy import SQLAlchemy
 from .api_struc.models import db
 from .api_struc.Test import Test
+from .api_struc.Workout import API_Workout
+from .api_struc.Exercise import API_Exercise
 # from code.API import db, Test
 
 __version__ = "v0_1"
@@ -11,6 +13,8 @@ api_bp = Blueprint('api', __name__)
 api = Api(api_bp)
 # api.add_resource(Tasks, '/tasks')
 api.add_resource(Test, "/test")
+api.add_resource(API_Workout, "/workouts")
+api.add_resource(API_Exercise, "/exercises")
 
 app = Flask(__name__)
 app.config.from_object("project.config.Config")
