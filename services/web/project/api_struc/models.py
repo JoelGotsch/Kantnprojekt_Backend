@@ -19,16 +19,15 @@ def default_user_name(context):
 class User(db.Model):
     __tablename__ = 'users'
 
-    id = db.Column(db.String(20), primary_key=True,
-                   default="u_"+str(random.randint(1, 1e10)))
+    id = db.Column(db.String(20), primary_key=True)
     email = db.Column(db.String(), unique=True)
     user_name = db.Column(db.String(), default=default_user_name, unique=True)
     password = db.Column(db.String(), default="")
     token = db.Column(db.String(30), default=funcs.rand_string(30))
     date_creation = db.Column(
-        db.DateTime(), default=datetime.datetime.utcnow())
+        db.DateTime(), default=datetime.utcnow())
     date_last_login = db.Column(
-        db.DateTime(), default=datetime.datetime.utcnow())
+        db.DateTime(), default=datetime.utcnow())
     challenges = db.relationship("UserChallenge", back_populates="user")
 
     def __repr__(self):
@@ -76,37 +75,11 @@ class Exercise(db.Model):
         })
 
 
-class Workout(db.Model):
-    __tablename__ = 'workouts'
-
-    id = db.Column(db.String(), primary_key=True)
-    user_id = db.Column(db.String())  # user which did the workout
-    date = db.Column(db.DateTime(), default=datetime.utcnow())
-    note = db.Column(db.String(), default="")
-    actions = db.relationship(
-        'Action', backref=db.backref('workout', lazy=True))
-    last_edit = db.Column(db.DateTime(), default=datetime.utcnow())
-    not_deleted = db.Column(db.Boolean(), default=False)
-
-    def __repr__(self):
-        return('<id {}>'.format(self.id))
-
-    def serialize(self):
-        return ({
-            'id': self.id,
-            'user_id': self.user_id,
-            'date': self.date.isoformat(),
-            'note': self.note,
-            'points': sum([ac.points for ac in self.actions]),
-            'actions': [action.serialize() for action in self.actions],
-            'not_deleted': self.not_deleted,
-        })
-
-
 class Action(db.Model):
     __tablename__ = 'actions'
     #
-    id = db.Column(db.String(), primary_key=True)
+    id = db.Column(db.String(), primary_key=True,
+                   default=funcs.rand_string(30))
     exercise_id = db.Column(db.String(), db.ForeignKey("exercises.id"))
     workout_id = db.Column(db.String(), db.ForeignKey("workouts.id"))
     number = db.Column(db.Integer())
@@ -117,16 +90,48 @@ class Action(db.Model):
     def __repr__(self):
         return('<id {}>'.format(self.id))
 
+    def get_points(self):
+        return(Exercise.query.get(self.exercise_id).points * self.number)
+
     def serialize(self):
         return ({
             'id': self.id,
             'exercise_id': self.exercise_id,
             'workout_id': self.workout_id,
-            'exercise': Exercise.query.get(self.exercise_id).first().serialize(),
+            'exercise': Exercise.query.get(self.exercise_id).serialize(),
             'number': self.number,
             'note': self.note,
-            'points': Exercise.query.get(self.exercise_id).points * self.number,
+            'points': self.get_points(),
         })
+
+
+class Workout(db.Model):
+    __tablename__ = 'workouts'
+
+    id = db.Column(db.String(), primary_key=True,
+                   default=funcs.rand_string(30))
+    user_id = db.Column(db.String())  # user which did the workout
+    date = db.Column(db.DateTime(), default=datetime.utcnow())
+    note = db.Column(db.String(), default="")
+    actions = db.relationship('Action', backref=db.backref('workout', lazy=True))
+    latest_edit = db.Column(db.DateTime(), default=datetime.utcnow())
+    not_deleted = db.Column(db.Boolean(), default=True)
+
+    def __repr__(self):
+        return('<id {}>'.format(self.id))
+
+    def serialize(self):
+        return ({
+            'id': self.id,
+            'user_id': self.user_id,
+            'date': self.date.isoformat(),
+            'note': self.note,
+            'points': sum([ac.get_points() for ac in self.actions]),
+            'actions': {action.id: action.serialize() for action in self.actions},
+            'not_deleted': self.not_deleted,
+            'latest_edit': self.latest_edit.isoformat(),
+        })
+
 
 
 # as a challenge contains multiple exercises and an exercise can be part of many challenges, we have a many-to-many relationship here.
@@ -142,7 +147,8 @@ challenge_exercises = db.Table('challenge_exercises',
 class Challenge(db.Model):
     __tablename__ = 'challenges'
 
-    id = db.Column(db.String(), primary_key=True)
+    id = db.Column(db.String(), primary_key=True,
+                   default=funcs.rand_string(30))
     name = db.Column(db.String(), unique=True)
     description = db.Column(db.String())
     exercises = db.relationship('Exercise', secondary=challenge_exercises, lazy='subquery',

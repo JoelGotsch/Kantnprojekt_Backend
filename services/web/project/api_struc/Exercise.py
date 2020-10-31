@@ -10,75 +10,80 @@ from ..misc import funcs as funcs
 class API_Exercise(Resource):
     def get(self):
         try:
-            user_id = request.headers.get("user_id")
-            user = User.query.filter(User.user_id==user_id).first()
-            exercises = []
-            if user.token != request.headers.get("token"):
+            token = request.headers.get("token")
+            user = User.query.filter(User.token == token).first()
+            wos = []
+            if user is None:
                 return {"message": "Token is invalid!"}, 400
-            try:
-                exercise_id = request.args.get("exercise_id")
-                if len()>0:
+            exercises = []
+            try:  # instead of request.args.get("exercise_id")
+                exercise_id = request.values.get("exercise_id")
+                if exercise_id is not None and len(exercise_id) > 0:
                     exercises = [Exercise.query.get(exercise_id)]
-            number = int(request.args.get("number"))
-            
-            if len(exercises)==0:
+            except:
+                exercises = []
+            try:
+                number = int(request.values.get("number"))
+            except:
+                number = 0
+
+            if len(exercises) == 0:
                 if number == 0:
-                    exercises = Exercise.query.filter_by(user_id = user_id).all()
+                    exercises = Exercise.query.filter_by(user_id=user.id).all()
                 else:
-                    exercises = Exercise.query.filter_by(user_id = user_id).limit(number).all()
+                    exercises = Exercise.query.filter_by(
+                        user_id=user.id).limit(number).all()
                 # wos2 = Workout.query.filter_by(last_edit >= start_date, last_edit <= end_date, user_id = user_id).all()
 
             result = {ex.id: ex.serialize() for ex in exercises}
-            return(jsonify(result))
+            return(result)
 
         except Exception as e:
-            return jsonify({"message":  str(e)}, 400)
+            return ({"message":  str(e)}, 400)
 
     def post(self):
         # has to have
         response = {}
         try:
             token = request.headers.get("token")
-            user_id = request.headers.get("user_id")
-            # firebase_id_token=request.args.get("firebase_id_token")
+            # firebase_id_token=request.values.get("firebase_id_token")
             # verify the id token with firebase admin package! only then return api key.
-            auth_ok = bool(User.query.filter_by(
-                id=user_id, token=token).count())
+            user = User.query.filter_by(token=token).first()
+            if user is None:
+                return(({"status": "failure", "message": "Authentication didn't work"}), 400)
         except Exception as e:
-            return jsonify({"message":  str(e)}, 400)
+            return ({"message":  str(e)}, 400)
 
-        if not auth_ok:
-            return(({"status": "failure", "message": "Authentication didn't work"}), 400)
-
-        user = User.query.filter_by(id=user_id).first()
-
-        data = request.get_json(force=True)  # should be a dict
+        data = request.json  # should be a dict
         print("incoming exercise data: "+str(data))
         try:
             for ex_id in data:
                 # check if ex_id is already created, so we only need to update it:
-                ex = Exercise.query.filter_by(id=ex_id, user_id=user_id).first()
+                ex = Exercise.query.filter_by(
+                    id=ex_id, user_id=user.id).first()
                 json_ex = data[ex_id]
-                if len(ex) > 0: # updating existing exercise
+                if len(ex) > 0:  # updating existing exercise
                     ex.note = json_ex["note"]
                     ex.not_deleted = json_ex["not_deleted"]
                     response[json_ex["local_id"]] = ex.id
-                    db.session.commit() 
-                else: # creating a new exercise
-                    ex = Exercise(user_id=user_id,
-                                date=dateutil.parser.parse(json_ex["date"]),
-                                title=json_ex["title"],
-                                note=json_ex["note"],
-                                last_edit=dateutil.parser.parse(
-                                    json_ex["last_edit"]),
-                                not_deleted=dateutil.parser.parse(
-                                    json_ex["not_deleted"]),
-                                unit=json_ex["unit"],
-                                points=json_ex["points"],
-                                max_points_day=json_ex["max_points_day"],
-                                weekly_allowance=json_ex["weekly_allowance"],
-                                )
-                    
+                    db.session.commit()
+                else:  # creating a new exercise
+                    ex = Exercise(
+                        id=funcs.rand_string(30),
+                        user_id=user.id,
+                        date=dateutil.parser.parse(json_ex["date"]),
+                        title=json_ex["title"],
+                        note=json_ex["note"],
+                        last_edit=dateutil.parser.parse(
+                            json_ex["last_edit"]),
+                        not_deleted=dateutil.parser.parse(
+                            json_ex["not_deleted"]),
+                        unit=json_ex["unit"],
+                        points=json_ex["points"],
+                        max_points_day=json_ex["max_points_day"],
+                        weekly_allowance=json_ex["weekly_allowance"],
+                    )
+
                     db.session.add(ex)
                     db.session.commit()
                     response[json_ex["local_id"]] = ex.id
@@ -87,5 +92,5 @@ class API_Exercise(Resource):
             print(e)
             return(({"status": "failure", "message": "Could not read json or header."}), 400)
 
-    def delete(self): # done via "not_deleted" = False 
+    def delete(self):  # done via "not_deleted" = False
         pass
