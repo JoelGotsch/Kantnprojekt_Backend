@@ -1,4 +1,5 @@
 from flask import Blueprint, Flask
+from flask_migrate import Migrate
 from flask_restful import Api
 # from flask_sqlalchemy import SQLAlchemy
 from .api_struc.models import db
@@ -21,6 +22,9 @@ api.add_resource(API_User, "/user")
 app = Flask(__name__)
 app.config.from_object("project.config.Config")
 db.init_app(app)
+# handle migration via manage.py file!
+# migrate = Migrate()
+# migrate.init_app(app, db)
 # db = SQLAlchemy(app)
 
 app.register_blueprint(api_bp, url_prefix='/'+str(__version__))

@@ -24,10 +24,10 @@ class API_Workout(Resource):
             except:
                 wos = []
             try:
-                last_edit_date = dateutil.parser.parse(
-                    request.values.get("last_edit_date"))
+                latest_edit_date = dateutil.parser.parse(
+                    request.values.get("latest_edit_date"))
             except:
-                last_edit_date = datetime.datetime.min
+                latest_edit_date = datetime.datetime.min
             try:
                 start_date = dateutil.parser.parse(
                     request.values.get("start_date"))
@@ -43,22 +43,23 @@ class API_Workout(Resource):
             except:
                 number = 0
             try:
-                only_header = bool(request.values.get("only_header"))
+                latest_edit_date_only = bool(
+                    request.values.get("latest_edit_date_only"))
             except:
-                only_header = False
+                latest_edit_date_only = False
             if len(wos) == 0:
                 if number == 0:
                     wos = Workout.query.filter(
-                        Workout.date >= start_date,  Workout.date <= end_date, Workout.user_id == user.id, Workout.latest_edit >= last_edit_date).all()
+                        Workout.date >= start_date,  Workout.date <= end_date, Workout.user_id == user.id, Workout.latest_edit >= latest_edit_date).all()
                 else:
                     wos = Workout.query.filter(Workout.date >= start_date, Workout.date <= end_date,
-                                               Workout.user_id == user.id, Workout.latest_edit >= last_edit_date).limit(number).all()
+                                               Workout.user_id == user.id, Workout.latest_edit >= latest_edit_date).limit(number).all()
                     # wos = Workout.query.filter(
                     #     Workout.date >= start_date and Workout.date <= end_date and Workout.user_id==user.id).limit(number).all()
                     # wos = Workout.query.filter_by(
                     #     date >= start_date, date <= end_date, user_id=user.id).limit(number).all()
                 # wos2 = Workout.query.filter_by(latest_edit >= start_date, latest_edit <= end_date, user_id = user_id).all()
-            if only_header:
+            if latest_edit_date_only:
                 result = {wo.id: wo.latest_edit.isoformat() for wo in wos}
             else:
                 result = {wo.id: wo.serialize() for wo in wos}
@@ -96,16 +97,14 @@ class API_Workout(Resource):
                     wo.date = dateutil.parser.parse(json_wo["date"])
                     wo.note = json_wo["note"]
                     wo.latest_edit = dateutil.parser.parse(
-                        json_wo["latest_edit"])
-                    wo.not_deleted = json_wo["not_deleted"]
+                        json_wo.get("latest_edit"))
                     # removing and adding each of the actions!
                     # for ac in wo.actions:
                     #     db.session.delete(ac)
                     #     db.session.commit()
                     for ac in wo.actions:
                         db.session.delete(ac)
-                    if len(wo.actions)>0:
-                        db.session.commit()
+                    db.session.commit()
                     # wo.actions.delete() # TODO: only delete actions which are not resent and don't re-create them below.
                     for ac_key in json_wo["actions"]:
                         # check if action is already in database:
@@ -116,20 +115,7 @@ class API_Workout(Resource):
                         # check if exercise exists already:
 
                         if Exercise.query.get(json_ac["exercise_id"]) is None:
-                            json_ex = json_ac["exercise"]
-                            ex = Exercise(
-                                id=json_ac["exercise_id"],
-                                title=json_ex["title"],
-                                note=json_ex["note"],
-                                user_id=json_ex["user_id"],
-                                unit=json_ex["unit"],
-                                points=json_ex["points"],
-                                max_points_day=json_ex["max_points_day"],
-                                weekly_allowance=json_ex["weekly_allowance"],
-                                not_deleted=json_ex["not_deleted"],
-                            )
-                            db.session.add(ex)
-                            db.session.commit()
+                            return(({"status": "failure", "message": "Exercise " + json_ac["exercise_id"] + " from workout "+json_wo['local_id']+" is not stored on the server."}), 400)
 
                         ac = Action(id=ac_key, exercise_id=json_ac["exercise_id"], workout_id=wo.id,
                                     number=json_ac["number"], note=json_ac["note"])
@@ -147,7 +133,6 @@ class API_Workout(Resource):
                                  note=json_wo["note"],
                                  latest_edit=dateutil.parser.parse(
                                      json_wo["latest_edit"]),
-                                 not_deleted=json_wo["not_deleted"],
                                  )
                     response[json_wo["local_id"]] = new_wo_id
                     db.session.add(wo)
@@ -155,20 +140,8 @@ class API_Workout(Resource):
                     for ac_key in json_wo["actions"]:
                         json_ac = json_wo["actions"][ac_key]
                         if Exercise.query.get(json_ac["exercise_id"]) is None:
-                            json_ex = json_ac["exercise"]
-                            ex = Exercise(
-                                id=json_ac["exercise_id"],
-                                title=json_ex["title"],
-                                note=json_ex["title"],
-                                user_id=json_ex["user_id"],
-                                unit=json_ex["unit"],
-                                points=json_ex["points"],
-                                max_points_day=json_ex["max_points_day"],
-                                weekly_allowance=json_ex["weekly_allowance"],
-                                not_deleted=json_ex["not_deleted"],
-                            )
-                            db.session.add(ex)
-                            db.session.commit()
+                            return(({"status": "failure", "message": "Exercise {exercise_id} from workout "+json_wo['local_id']+" is not stored on the server."}), 400)
+
                         ac = Action(id=funcs.rand_string(30), exercise_id=json_ac["exercise_id"], workout_id=wo.id,
                                     number=json_ac["number"], note=json_ac["note"])
                         wo.actions.append(ac)

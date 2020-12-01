@@ -2,7 +2,7 @@
 import random
 import string
 
-def rand_string(length):
+def rand_string(length = 30):
     rand_str = ''.join(random.choice(
                     string.ascii_letters + string.digits) for _ in range(length))
     return(rand_str)

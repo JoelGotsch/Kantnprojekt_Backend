@@ -1,6 +1,6 @@
 from flask_restful import Resource
 from flask import request, jsonify
-from .models import User, db
+from .models import User, Exercise, UserExercise, db
 import datetime
 import random
 from ..misc import funcs as funcs
@@ -42,8 +42,29 @@ class API_User(Resource):
                     return(({"status": "failure", "message": "Username already in use."}), 400)
                 user = User(id=funcs.rand_user_id(), username=data.get("user_name"), email=_email,
                             password=password,)
+                # create user-exercises from admin exercises:
+
                 db.session.add(user)
                 db.session.commit()  # now the wo should have an id
+                admin_user = User.query.filter_by(
+                    user_name="kantnprojekt").first()
+                ex_list = [Exercise.query.get(us_ex.exercise_id)
+                           for us_ex in admin_user.exercises]
+                for exercise in ex_list:
+                    us_ex = UserExercise(
+                        note=exercise.note,
+                        exercise_id=exercise.id,
+                        user_id=user.id,
+                        user=user,
+                        points=exercise.points,
+                        max_points_day=exercise.max_points_day,
+                        max_points_week=exercise.max_points_week,
+                        daily_allowance=exercise.daily_allowance,
+                        weekly_allowance=exercise.weekly_allowance,
+                    )
+                    db.session.add(us_ex)
+                db.session.commit()  # now the wo should have an id
+
                 return(user.serialize(), 201)
             elif action == "login":
                 if User.query.filter_by(email=_email, password=password).count() == 0:

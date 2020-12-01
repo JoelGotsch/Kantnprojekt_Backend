@@ -10,5 +10,5 @@ then
 
     echo "PostgreSQL started"
 fi
-
-exec "$@"
+exec gunicorn --bind 0.0.0.0:8002 manage:app
+# exec "$@"
