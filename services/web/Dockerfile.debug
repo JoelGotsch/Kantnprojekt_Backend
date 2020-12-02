@@ -55,6 +55,8 @@ WORKDIR $APP_HOME
 RUN apt-get update && apt-get install -y --no-install-recommends netcat
 COPY --from=builder /usr/src/app/wheels /wheels
 COPY --from=builder /usr/src/app/requirements.debug.txt .
+RUN apt-get update && apt-get install -y postgresql
+RUN apt-get install -y nano
 RUN pip install --upgrade pip
 RUN pip install --no-cache /wheels/*
 

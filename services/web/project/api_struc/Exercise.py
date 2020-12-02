@@ -16,7 +16,7 @@ class API_Exercise(Resource):
             token = request.headers.get("token")
             user = User.query.filter(User.token == token).first()
             if user is None:
-                return {"message": "Token is invalid!"}, 400
+                return {"status": "failure","message": "Token is invalid!"}, 400
             try:
                 latest_edit_date = dateutil.parser.parse(
                     request.values.get("latest_edit_date"))
@@ -69,11 +69,11 @@ class API_Exercise(Resource):
                       "challenge_exercises": challenge_exercises_dict}
             print(datetime.datetime.now())
             print(result)
-            return(result, 201)
+            return({"status": "success", "data":  result}, 201)
 
         except Exception as e:
             print(e)
-            return ({"message":  str(e)}, 400)
+            return ({"status": "failure", "message":  str(e)}, 400)
 
     def post(self):
         # should be a dict like common_exercises_dict. Automatically creates then the common_exercise and the user_exercise.
@@ -85,7 +85,7 @@ class API_Exercise(Resource):
             if user is None:
                 return(({"status": "failure", "message": "Authentication didn't work"}), 400)
         except Exception as e:
-            return ({"message":  str(e)}, 400)
+            return ({"status": "failure", "message":  str(e)}, 400)
 
         data = request.get_json(force=True)  
         print("incoming exercise data: "+str(data))
@@ -103,7 +103,7 @@ class API_Exercise(Resource):
                 daily_allowance = json_ex.get("daily_allowance")
                 weekly_allowance = json_ex.get("weekly_allowance")
                 private = json_ex.get("private")
-                latest_edit = json_ex.get("latest_edit")
+                latest_edit = dateutil.parser.parse(json_ex.get("latest_edit"))
                 local_id = json_ex.get("local_id")
                 title = json_ex.get("title")
                 description = json_ex.get("description")
@@ -128,6 +128,9 @@ class API_Exercise(Resource):
                 else:  # creating a new user exercise (and Exercise if it is linked to a non-existent one)
                     ex = Exercise.query.get(ex_id) # if not None, only update of Exercise, creation of UserExercise.
                     if ex is None:
+                        if Exercise.query.filter_by(title = title).first() is not None:
+                            print("Exercise with that title already exists. Choose a different title.")
+                            return(({"status": "failure", "message": "Exercise with that title already exists. Choose a different title."}), 400)
                         # completely new exercise
                         ex = Exercise(
                             title=title,
@@ -142,8 +145,7 @@ class API_Exercise(Resource):
                             weekly_allowance=weekly_allowance,
                             checkbox=checkbox,
                             checkbox_reset=checkbox_reset,
-                            latest_edit=dateutil.parser.parse(
-                                latest_edit),
+                            latest_edit=latest_edit,
                         )
                         db.session.add(ex)
                         db.session.commit()
@@ -157,8 +159,7 @@ class API_Exercise(Resource):
                         max_points_week=max_points_week,
                         daily_allowance=daily_allowance,
                         weekly_allowance=weekly_allowance,
-                        latest_edit=dateutil.parser.parse(
-                            latest_edit),
+                        latest_edit=latest_edit,
                         private=private,
                     )
                     db.session.add(us_ex)

@@ -16,7 +16,7 @@ class API_Workout(Resource):
             user = User.query.filter(User.token == token).first()
             wos = []
             if user is None:
-                return {"message": "Token is invalid!"}, 400
+                return {"status": "failure", "message": "Token is invalid!"}, 400
             try:
                 workout_id = request.values.get("workout_id")
                 if workout_id is not None and len(workout_id) > 0:
@@ -63,10 +63,10 @@ class API_Workout(Resource):
                 result = {wo.id: wo.latest_edit.isoformat() for wo in wos}
             else:
                 result = {wo.id: wo.serialize() for wo in wos}
-            return(result)
+            return({"status": "success", "data": result})
 
         except Exception as e:
-            return ({"message":  str(e)}, 400)
+            return ({"status": "failure", "message":  str(e)}, 400)
 
     def post(self):
         # has to have

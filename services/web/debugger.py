@@ -12,9 +12,13 @@ def initialize_flask_server_debugger_if_needed():
                 environ["ALREADY_DEBUGGING"] = "True"
                 debugpy.wait_for_client()
                 print("VS Code debugger attached, enjoy debugging", flush=True)
+            else:
+                print("Debugger: This has process.id == 1.")
         except Exception as e:
             print("Couldn't start debugger because of:")
             print(e)
             print("ALREADY_DEBUGGING: " + str(getenv("ALREADY_DEBUGGING")))
     else:
+        print(getenv("DEBUGGER"))
+        print(getenv("ALREADY_DEBUGGING"))
         print("No debugging. Alrighty..")

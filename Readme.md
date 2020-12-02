@@ -8,7 +8,7 @@ Also great is this page: https://morioh.com/p/116ad91ca651 with a little bit mor
 - install docker: https://docs.docker.com/engine/install/debian/ and docker-compose: https://docs.docker.com/compose/install/. 
 - nginx installed via `sudo apt-get install nginx`
 - python v3.7 or higher. Check with "python --version" that it indeed runs 3.x.x and not 2.7.x
-- postgres for database storage, installation via: 
+- postgres for database storage, installation see below
 - python packages, installation with requirements.txt
 
 ## First time start:
@@ -21,6 +21,16 @@ Also great is this page: https://morioh.com/p/116ad91ca651 with a little bit mor
     - Quit the postgres terminal via `\q` and hit return.
 Useful commands:
         - `service postgresql status\start\stop`
+1. Install everything necessary for pgadmin4 (which gives us an easier access to the database later):
+    - `apt-get install libsqlite3-dev`
+    - re-install (if it was already installed) python. You can update the version to your liking. Run the commands after each other (taken from https://www.pgadmin.org/docs/pgadmin4/development/server_deployment.html#nginx-configuration-with-uwsgi)
+
+        cd /home/
+        wget https://www.python.org/ftp/python/3.8.6/Python-3.8.6.tgz
+        tar xf Python-3.8.6.tgz
+        cd Python-3.8.6/
+        ./configure --enable-loadable-sqlite-extensions && make && sudo make install
+
 1. Get code via `cd ~ ` and `git clone https://github.com/JoelGotsch/Kantnprojekt_Backend.git`. Alternatively, for easier development you can create ssh keys on the server and add them to your git repo.\
 You should now have a new folder with your code in there (in this case the folder name is '`Kantnprojekt_Backend`')\
 **optional:** Test the setup:
@@ -29,6 +39,22 @@ You should now have a new folder with your code in there (in this case the folde
 and create the virtual environment via `python3.8 -m venv venv` which creates the folder venv.
     - Activate the virtual environment via `source venv/bin/activate`
     - Install requirements via `pip install -r services/web/requirements.txt` (it is in there, because the docker container needs it too later)
+    - if you want to install pgadmin4, you will also need to install and configure that:
+
+        pip install pgadmin4
+        cd venv/lib/python3.8/site-packages/pgadmin4
+        #create config_local.py with following content:
+        nano config_local.py
+
+    - In that file copy the following lines and save and exit nano after that:
+
+        LOG_FILE = '/var/log/pgadmin4/pgadmin4.log'
+        SQLITE_PATH = '/var/lib/pgadmin4/pgadmin4.db'
+        SESSION_DB_PATH = '/var/lib/pgadmin4/sessions'
+        STORAGE_DIR = '/var/lib/pgadmin4/storage'
+    
+    - run `python setup.py` to setup pgadmin4. You will need to set your email and password which you will obviously need to remember to login to pgadmin4 later on (duh!). pgadmin is kinda save, the database we are connecting to has the additional password we set in `config.py` plus it operates in a mounted directory, meaning it can't access the storage of the server. Still, don't be too lazy with the password.
+
     <!-- - Run `python app.py` which should start a server on `127.0.0.1:8001/`
     - test via `curl 127.0.0.1:8001/api/v0_1/test`, this should yield a `"status": "success"` message. -->
 1. Set-up VS Code properly so that Pylance will detect the imports. This is necessary as the folder structure in the docker container will be different and the imports need to work for that.
@@ -42,10 +68,15 @@ and create the virtual environment via `python3.8 -m venv venv` which creates th
                 server_name <Your Linodes IP>;
 
                 location / {
-                        proxy_pass http://127.0.0.1:8003;
+                        proxy_pass http://0.0.0.0:8003;
                         proxy_set_header Host $host;
                         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
                 }
+				location /pgadmin4/ {
+					include proxy_params;
+					proxy_pass http://unix:/tmp/pgadmin4.sock;
+					proxy_set_header X-Script-Name /pgadmin4;
+				}
           }
 
     - Unlink the NGINX default config
@@ -66,9 +97,25 @@ and create the virtual environment via `python3.8 -m venv venv` which creates th
     - `python manage.py db init` this makes future migrations of the database possible. Flask-migrate is used for that and it will create a folder `versions` which hold the relevant information for this database upgrades and downgrades. This should be checked into your git-repository. For more information what you can do with flask-migration visit https://flask-migrate.readthedocs.io/en/latest/
     - *Optional*: View contents of table: `psql --host=localhost --dbname=kantnprojekt --username=kantn`. You will be asked for the password, which we set to 'password'. Then `\dt+` to see a list of the tables. SQL commands work too: `SELECT * FROM exercises;` (exit via `q`)
 
-1. Next step: using gunicorn: `gunicorn -w 3 kantn` (making 3 worker processes)
+1. Next step: using gunicorn: `gunicorn -w 3 kantn` (making 3 worker processes) would run the flask app locally on the server. However, it is more useful for debugging to start flask directly via the debugging tool in VS Code as that enables hot-reloading. For production we will use a docker container.
 
+1. If you installed pgadmin4 like described above, you can now also connect via the webbrowser to pgadmin after starting the service via gunicorn:
+
+        gunicorn --bind unix:/tmp/pgadmin4.sock \
+                --workers=1 \
+                --threads=25 \
+                --chdir /home/Kantnprojekt_Backend/venv/lib/python3.8/site-packages/pgadmin4 \
+                pgAdmin4:app
+
+    - So now you can access pgadmin4 via http://api.kantnprojekt.club/pgadmin4. 
+    - In the mask there, add the database you created above (with the settings from `config.py`). See https://thedbadmin.com/how-to-connect-postgresql-database-from-pgadmin/.
+    - To be able to backup, go to `File-Preferences-Paths-Binary paths` and set `PostgreSQL Binary Path` to `/usr/bin/`
+    - Do a backup via right-click on kantnprojekt -> Backup. Set filename to whatever, e.g. the current date `2020-12-01.tar`, choose Format = Tar, Encoding = UTF8, Role name = kantn and in the Dump options tabe enable Data.
+    - Better way to backup: `export PGPASSWORD='password'; pg_dump -Fc -U kantn --host=localhost -d kantnprojekt > pg_ouput.dump`
+    - restore via : `export PGPASSWORD='password'; pg_restore -U kantn --host=localhost -d kantnprojekt -f pg_ouput.dump` 
+    - alternatively restore via `export PGPASSWORD='password'; psql -U kantn --host=localhost -d kantnprojekt < pg_ouput.dump`. In this method there is an issue with foreign keys, so just run this command multiple times and it will be fine.
 1. Now shifting everything inside a docker container and using gunicorn. To understand what our docker files are doing, go to https://rollout.io/blog/using-docker-compose-for-python-development/:
+    - The following is just for your interest, you don't need to change the file. This one will be copied into the docker-container and runs there.
    - As we will use the 8002 port only within the docker container and nginx running inside the container is looking for the 8003 port to map it to the 8002 port, we have to switch the nginx configuration on the server:
    `sudo nano services/nginx/nginx.conf`
 
@@ -107,7 +154,7 @@ and create the virtual environment via `python3.8 -m venv venv` which creates th
 
 ## Useful docker commands
 - To step into a docker container bash run `docker container ls` to see the docker containers and their names which are running. In this case we want to have a shell in `kantnprojekt_backend_web_1`. We also want to be root, so we set the user to that, otherwise we would be "app" which can't install anything. So the command is `docker exec --user "root" -it kantnprojekt_backend_web_1 /bin/bash`.
-- 
+
 
 ## How to change/ adapt code:
 
@@ -123,3 +170,6 @@ For changes: If the API return is in a different format (new variables), then th
 - create file in resources (see other files as templates)
 - add route in app.py
 - run new backend.
+
+### Other useful commands:
+- Kill all gunicorn processes: `ps -ef | grep 'gunicorn' | grep -v grep | awk '{print $2}' | xargs -r kill -9`

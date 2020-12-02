@@ -3,7 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from project.api_struc.models import User, Exercise, Workout, Action, Challenge, UserChallenge, UserExercise, ChallengeExercise
 from project import app, db
 from project.misc.funcs import rand_string, rand_user_id
-from flask.cli import FlaskGroup
+# from flask.cli import FlaskGroup
 from flask_script import Manager
 from flask_migrate import Migrate, MigrateCommand
 import datetime
@@ -51,6 +51,191 @@ def create_db():
     db.drop_all()
     db.create_all()
     db.session.commit()
+
+@manager.command
+def backup_dump():
+    # print(os.listdir()): If run from VS Code debugger, we are in /home/Kantnprojekt_Backend
+    import pathlib
+    manage_path = pathlib.Path(__file__).parent.absolute()
+    print(manage_path)
+    filename = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M.dump")
+    full_file = os.path.join(manage_path, "project", "backups", filename)
+    os.makedirs(full_file, exist_ok = True)
+    # see https://stackoverflow.com/questions/4256107/running-bash-commands-in-python/51950538#51950538 for ultimate explenation of subprocess and bash commands
+    bashCommand = "export PGPASSWORD='password'; pg_dump -U kantn --host=localhost -d kantnprojekt > "+full_file
+    import subprocess
+    output = subprocess.run(bashCommand, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell = True, check=True, text = True)
+    print(output.stdout)
+    print(output.stderr)
+
+
+@manager.command
+def restore_backup_dump(filename=""):
+    create_db() # first resetting the tables, then load the data
+    import pathlib
+    manage_path = pathlib.Path(__file__).parent.absolute()
+    backup_path = os.path.join(manage_path, "project", "backups")
+    if filename == "":
+        # try to get most up-to-date file in backups:
+        dirFiles = os.listdir(backup_path) #list of directory files
+        dirFiles.sort(reverse=True)
+        if len(dirFiles) == 0:
+            print("No backup-files found.")
+            return
+        filename = dirFiles[0]
+    full_file = os.path.join(backup_path, filename)
+    # bashCommand = "export PGPASSWORD='password'; psql -U kantn --host=localhost -d kantnprojekt < kantnprojekt /home/Kantnprojekt_Backend/services/web/project/backups/"+filename
+    bashCommand = "export PGPASSWORD='password'; psql -U kantn --host=localhost -d kantnprojekt < " + full_file
+    import subprocess
+    import time
+    # For some reason, pg_restore and 
+    for i in range(6):
+        try:
+            output = subprocess.run(bashCommand, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, check=False, text = True)
+        except Exception as e:
+            print(e)
+        time.sleep(0.1)
+        print(i)
+
+@manager.command
+def backup_dump_docker():
+    # print(os.listdir()): If run from VS Code debugger, we are in /home/Kantnprojekt_Backend
+    import pathlib
+    manage_path = pathlib.Path(__file__).parent.absolute()
+    print(manage_path)
+    filename = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M.dump")
+    full_file = os.path.join(manage_path, "project", "backups", filename)
+    os.makedirs(full_file, exist_ok = True)
+    # see https://stackoverflow.com/questions/4256107/running-bash-commands-in-python/51950538#51950538 for ultimate explenation of subprocess and bash commands
+    bashCommand = "export PGPASSWORD='password'; pg_dump -U kantn --host=kantnprojekt_backend_postgres_1 -d kantnprojekt_db > "+full_file
+    import subprocess
+    output = subprocess.run(bashCommand, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell = True, check=True, text = True)
+    print(output.stdout)
+    print(output.stderr)
+
+
+@manager.command
+def restore_backup_dump_docker(filename=""):
+    import pathlib
+    manage_path = pathlib.Path(__file__).parent.absolute()
+    backup_path = os.path.join(manage_path, "project", "backups")
+    if filename == "":
+        # try to get most up-to-date file in backups:
+        dirFiles = os.listdir(backup_path) #list of directory files
+        dirFiles.sort(reverse=True)
+        if len(dirFiles) == 0:
+            print("No backup-files found.")
+            return
+        filename = dirFiles[0]
+    full_file = os.path.join(backup_path, filename)
+    # bashCommand = "export PGPASSWORD='password'; psql -U kantn --host=localhost -d kantnprojekt < kantnprojekt /home/Kantnprojekt_Backend/services/web/project/backups/"+filename
+    bashCommand = "export PGPASSWORD='password'; psql -U kantn --host=kantnprojekt_backend_postgres_1 -d kantnprojekt_db < " + full_file
+    import subprocess
+    import time
+    # For some reason, pg_restore and 
+    for i in range(6):
+        try:
+            output = subprocess.run(bashCommand, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, check=False, text = True)
+        except Exception as e:
+            print(e)
+        time.sleep(0.1)
+        print(i)
+        # print(output.stdout)
+    # subprocess.check_output()
+
+# Using the binary-commands would be the cleaner choice and should work, but it doesn't. Here it does: https://www.youtube.com/watch?v=nbnRibO5Qmo
+# @manager.command
+# def backup_dump_binary():
+#     # print(os.listdir()): If run from VS Code debugger, we are in /home/Kantnprojekt_Backend
+#     os.makedirs("/home/Kantnprojekt_Backend/services/web/project/binary_backups", exist_ok = True)
+#     filename = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M.dump")
+#     # see https://stackoverflow.com/questions/4256107/running-bash-commands-in-python/51950538#51950538 for ultimate explenation of subprocess and bash commands
+#     bashCommand = "export PGPASSWORD='password'; pg_dump -Fc -U kantn --host=localhost -d kantnprojekt > /home/Kantnprojekt_Backend/services/web/project/binary_backups/"+filename
+#     import subprocess
+#     output = subprocess.run(bashCommand, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell = True, check=True, text = True)
+#     print(output.stdout)
+#     print(output.stderr)
+
+# @manager.command
+# def restore_backup_dump_binary(filename=""):
+#     create_db() # first resetting the tables, then load the data
+#     if filename == "":
+#         # try to get most up-to-date file in backups:
+#         dirFiles = os.listdir('/home/Kantnprojekt_Backend/services/web/project/binary_backups') #list of directory files
+#         dirFiles.sort(reverse=True)
+#         if len(dirFiles) == 0:
+#             print("No backup-files found.")
+#             return
+#         filename = dirFiles[0]
+
+#     # bashCommand = "export PGPASSWORD='password'; psql -U kantn --host=localhost -d kantnprojekt < kantnprojekt /home/Kantnprojekt_Backend/services/web/project/backups/"+filename
+#     bashCommand = "export PGPASSWORD='password'; pg_restore -U kantn --host=localhost -d kantnprojekt /home/Kantnprojekt_Backend/services/web/project/binary_backups/"+filename
+#     import subprocess
+#     output = subprocess.run(bashCommand, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, check=False, text = True)
+#     print(output.stdout)
+#     # subprocess.check_output()
+@manager.command
+def delete_wallsits():
+    # check if user-exercises where deleted also (it should be!)
+    # db.session.commit()
+    try:
+        wallsit_exs = Exercise.query.filter(Exercise.title == "Wallsit").all()
+        wallsit_us_exs = [UserExercise.query.filter(UserExercise.exercise_id == ex.id).first() for ex in wallsit_exs]
+        wallsit_actions = [Action.query.filter(Action.exercise_id == ex.id).first() for ex in wallsit_exs]
+
+        for ac in wallsit_actions:
+            if ac is not None:
+                wo = Workout.query.get(ac.workout_id)
+                wo.latest_edit = datetime.datetime.now()
+                db.session.delete(ac)
+        db.session.commit()
+        
+        for us_ex in wallsit_us_exs:
+            if us_ex is not None:
+                db.session.delete(us_ex)
+        db.session.commit()
+        
+        for ex in wallsit_exs:
+            if ex is not None:
+                db.session.delete(ex)
+        db.session.commit()
+    except Exception as e:
+        print("Exception was expected...")
+        print(e)
+
+@manager.command
+def create_admin_exercises():
+    try:
+        admin_user = User.query.filter_by(
+                        user_name="kantnprojekt").first()
+        my_user =  User.query.filter_by(
+                        user_name="Viech").first()
+        for us_ex in my_user.exercises:
+            # check if admin_user has exercise with 
+            exercise_id = us_ex.exercise_id
+            admin_has_ex = False
+            for ad_us_ex in admin_user.exercises:
+                if ad_us_ex.id == exercise_id:
+                    admin_has_ex = True
+            if not admin_has_ex:
+                exercise = Exercise.query.get(us_ex.exercise_id)
+                new_ad_us_ex = UserExercise(
+                            note=exercise.note,
+                            exercise_id=exercise.id,
+                            user_id=admin_user.id,
+                            user=admin_user,
+                            points=exercise.points,
+                            max_points_day=exercise.max_points_day,
+                            max_points_week=exercise.max_points_week,
+                            daily_allowance=exercise.daily_allowance,
+                            weekly_allowance=exercise.weekly_allowance,
+                        )
+                db.session.add(new_ad_us_ex)
+                db.session.commit()
+    except Exception as e:
+        print("Exception was expected...")
+        print(e)
+
 
 @manager.command
 def seed_db():
