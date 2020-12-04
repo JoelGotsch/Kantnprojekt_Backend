@@ -68,7 +68,7 @@ and create the virtual environment via `python3.8 -m venv venv` which creates th
                 server_name <Your Linodes IP>;
 
                 location / {
-                        proxy_pass http://0.0.0.0:8003;
+                        proxy_pass http://0.0.0.0:8002;
                         proxy_set_header Host $host;
                         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
                 }
@@ -99,7 +99,7 @@ and create the virtual environment via `python3.8 -m venv venv` which creates th
 
 1. Next step: using gunicorn: `gunicorn -w 3 kantn` (making 3 worker processes) would run the flask app locally on the server. However, it is more useful for debugging to start flask directly via the debugging tool in VS Code as that enables hot-reloading. For production we will use a docker container.
 
-1. If you installed pgadmin4 like described above, you can now also connect via the webbrowser to pgadmin after starting the service via gunicorn:
+1. If you installed pgadmin4 like described above, you can now also connect via the webbrowser to pgadmin after starting the service via gunicorn (you will need gunicorn installed, so best use your virtual environment):
 
         gunicorn --bind unix:/tmp/pgadmin4.sock \
                 --workers=1 \
@@ -138,19 +138,33 @@ and create the virtual environment via `python3.8 -m venv venv` which creates th
 
             }
 
+    - Run (from root directory of the project): `make debug_backup` if you have a backup-database in `services/web/project/backups` to automatically load that database in the docker container. The script then waits for a debugger to attach, so next step:
+    - Configure, if you didn't do it alreay, VS Code launch.json:
 
-   - Run again `sudo nano /etc/nginx/sites-enabled/kantnprojekt` and change the "8002" to "8003". Save and exit. Restart the nginx server with `sudo nginx -s reload`. \
-   NOTE: If these ports should be changed, look into the docker-compose file as well as the services/nginx/nginx.config file.
-   - Run: (-d: dispatch, runs in background, --build: makes sure the container is built again)
+            {
+            "name": "Python: Remote Attach docker",
+            "type": "python",
+            "request": "attach",
+            "port": 10001,
+            "host": "localhost",
+            "pathMappings": [
+                {
+                "localRoot": "${workspaceFolder}/services/web",
+                "remoteRoot": "/home/app/web"
+                }
+            ]
+            },
+    - And run it. (Via pressing F5 in VS Code)
+    - Test via Insomnia or other API testing tool (or webbrowser): `http://api.kantnprojekt.club/v0_1/test` 
 
-         docker-compose -f docker-compose.prod.yml down -v
-         docker-compose -f docker-compose.prod.yml up -d --build
-         docker-compose -f docker-compose.prod.yml exec web python manage.py create_db
 
-2. 
-- migrate.py commands to create postgres database
-- start app via ...
-- test api via ...
+1. You can now create backups easily:
+- In root directory of project, run `docker-compose -f docker-compose.debug.yml exec web python manage.py backup_dump_docker`. This creates a dump file within the docker container.
+1. Some other commands..
+    - migrate.py commands to create postgres database
+    - start app via ...
+    - test api via ...
+
 
 ## Useful docker commands
 - To step into a docker container bash run `docker container ls` to see the docker containers and their names which are running. In this case we want to have a shell in `kantnprojekt_backend_web_1`. We also want to be root, so we set the user to that, otherwise we would be "app" which can't install anything. So the command is `docker exec --user "root" -it kantnprojekt_backend_web_1 /bin/bash`.

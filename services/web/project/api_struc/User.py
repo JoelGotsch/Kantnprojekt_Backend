@@ -34,13 +34,14 @@ class API_User(Resource):
             data = request.json
             action = data.get("action")
             _email = str(data.get("email")).lower()
+            username = data.get("user_name")
             password = data.get("password")
             if action == "register":
                 if User.query.filter_by(email=_email).count() > 0:
                     return(({"status": "failure", "message": "E-Mail adress already in use."}), 400)
-                if User.query.filter_by(username=data.get("user_name")).count() > 0:
+                if User.query.filter_by(user_name=username).count() > 0:
                     return(({"status": "failure", "message": "Username already in use."}), 400)
-                user = User(id=funcs.rand_user_id(), username=data.get("user_name"), email=_email,
+                user = User(id=funcs.rand_user_id(), user_name=username, email=_email,
                             password=password,)
                 # create user-exercises from admin exercises:
 

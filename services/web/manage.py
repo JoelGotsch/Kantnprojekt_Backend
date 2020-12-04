@@ -59,10 +59,10 @@ def backup_dump():
     manage_path = pathlib.Path(__file__).parent.absolute()
     print(manage_path)
     filename = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M.dump")
-    full_file = os.path.join(manage_path, "project", "backups", filename)
-    os.makedirs(full_file, exist_ok = True)
+    full_folder = os.path.join(manage_path, "project", "backups")
+    os.makedirs(full_folder, exist_ok = True)
     # see https://stackoverflow.com/questions/4256107/running-bash-commands-in-python/51950538#51950538 for ultimate explenation of subprocess and bash commands
-    bashCommand = "export PGPASSWORD='password'; pg_dump -U kantn --host=localhost -d kantnprojekt > "+full_file
+    bashCommand = "export PGPASSWORD='password'; pg_dump -U kantn --host=localhost -d kantnprojekt > "+os.path.join(full_folder, filename)
     import subprocess
     output = subprocess.run(bashCommand, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell = True, check=True, text = True)
     print(output.stdout)
@@ -92,6 +92,7 @@ def restore_backup_dump(filename=""):
     for i in range(6):
         try:
             output = subprocess.run(bashCommand, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, check=False, text = True)
+            print(output)
         except Exception as e:
             print(e)
         time.sleep(0.1)
@@ -104,10 +105,10 @@ def backup_dump_docker():
     manage_path = pathlib.Path(__file__).parent.absolute()
     print(manage_path)
     filename = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M.dump")
-    full_file = os.path.join(manage_path, "project", "backups", filename)
-    os.makedirs(full_file, exist_ok = True)
+    full_folder = os.path.join(manage_path, "project", "backups")
+    os.makedirs(full_folder, exist_ok = True)
     # see https://stackoverflow.com/questions/4256107/running-bash-commands-in-python/51950538#51950538 for ultimate explenation of subprocess and bash commands
-    bashCommand = "export PGPASSWORD='password'; pg_dump -U kantn --host=kantnprojekt_backend_postgres_1 -d kantnprojekt_db > "+full_file
+    bashCommand = "export PGPASSWORD='password'; pg_dump -U kantn --host=kantnprojekt_backend_postgres_1 -d kantnprojekt_db > "+os.path.join(full_folder, filename)
     import subprocess
     output = subprocess.run(bashCommand, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell = True, check=True, text = True)
     print(output.stdout)
@@ -136,6 +137,7 @@ def restore_backup_dump_docker(filename=""):
     for i in range(6):
         try:
             output = subprocess.run(bashCommand, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, check=False, text = True)
+            print(output)
         except Exception as e:
             print(e)
         time.sleep(0.1)

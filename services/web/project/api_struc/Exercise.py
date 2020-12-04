@@ -15,6 +15,7 @@ class API_Exercise(Resource):
         try:
             token = request.headers.get("token")
             user = User.query.filter(User.token == token).first()
+            print("get exercise request from "+user.user_name + " " + user.id)
             if user is None:
                 return {"status": "failure","message": "Token is invalid!"}, 400
             try:
@@ -67,8 +68,8 @@ class API_Exercise(Resource):
             result = {"common_exercises": common_exercises_dict,
                       "user_exercises": user_exercises_dict,
                       "challenge_exercises": challenge_exercises_dict}
-            print(datetime.datetime.now())
-            print(result)
+            # print(datetime.datetime.now())
+            # print(result)
             return({"status": "success", "data":  result}, 201)
 
         except Exception as e:
