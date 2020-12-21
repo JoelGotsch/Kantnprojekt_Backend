@@ -62,6 +62,7 @@ and create the virtual environment via `python3.8 -m venv venv` which creates th
 1. Set-up Nginx to connect the public IP adress with localhost:
     - Create an NGINX Configuration file via `sudo nano /etc/nginx/sites-enabled/kantnprojekt`
     - enter the configuration (port 80 is used as it is the standard web port and we can therefore just put in the url later without naming a port). We use port 8002 because the gunicorn WSGI will use that port.
+    (the test part is later for creating a sandbox to test a flask script while still running the docker container in production on port 8002)
   
           server {
                 listen 80;
@@ -72,11 +73,17 @@ and create the virtual environment via `python3.8 -m venv venv` which creates th
                         proxy_set_header Host $host;
                         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
                 }
-				location /pgadmin4/ {
-					include proxy_params;
-					proxy_pass http://unix:/tmp/pgadmin4.sock;
-					proxy_set_header X-Script-Name /pgadmin4;
-				}
+                location /pgadmin4/ {
+                    include proxy_params;
+                    proxy_pass http://unix:/tmp/pgadmin4.sock;
+                    proxy_set_header X-Script-Name /pgadmin4;
+                }
+                location /test/ {
+                        proxy_pass http://0.0.0.0:9003;
+                        proxy_set_header Host $host;
+                        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                }
+
           }
 
     - Unlink the NGINX default config
@@ -187,3 +194,48 @@ For changes: If the API return is in a different format (new variables), then th
 
 ### Other useful commands:
 - Kill all gunicorn processes: `ps -ef | grep 'gunicorn' | grep -v grep | awk '{print $2}' | xargs -r kill -9`
+
+# Optional: Enable https
+
+follow https://letsencrypt.org/getting-started/ to install certbot (https://certbot.eff.org/lets-encrypt/debianbuster-nginx).
+User either the cert-only option or input `api.kantnprojekt.com` and you should end up with a certificate file, but certbot is not able to update the nginx config.
+Lets do that manually:
+    - The certificate files should be stored in `/etc/letsencrypt/live/api.kantnprojekt.club/fullchain.pem` and `/etc/letsencrypt/live/api.kantnprojekt.club/privkey.pem`.
+    - Open `sudo nano /etc/nginx/sites-enabled/kantnprojekt`
+    - Add the following
+
+        server {
+            listen 443 ssl;
+            server_name api.kantnprojekt.com; # Your website's domain name
+            ssl_certificate /etc/letsencrypt/live/api.kantnprojekt.club/fullchain.pem; # Path to the full chain of your SSL certificate
+            ssl_certificate_key /etc/letsencrypt/live/api.kantnprojekt.club/privkey.pem; # Path to the private key of your SSL certificate
+        }
+
+    - The file should look like this now:
+
+        server {
+            listen 443 ssl;
+            server_name api.kantnprojekt.com; 
+            ssl_certificate /etc/letsencrypt/live/api.kantnprojekt.club/fullchain.pem; # Path to the full chain of your SSL certificate
+            ssl_certificate_key /etc/letsencrypt/live/api.kantnprojekt.club/privkey.pem; # Path to the private key of your SSL certificate
+
+                location /v0_2 {
+                        proxy_pass http://0.0.0.0:8003;
+                        proxy_set_header Host $host;
+                        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                }
+        }
+
+        server {
+                listen 80;
+                server_name "172.105.69.58";
+
+                location /pgadmin4 {
+                        include proxy_params;
+                        proxy_pass http://unix:/tmp/pgadmin4.sock;
+                        proxy_set_header X-Script-Name /pgadmin4;
+                }
+        }
+
+ ``
+    - Reload nginx: `sudo nginx -s reload` 

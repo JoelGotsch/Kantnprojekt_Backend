@@ -1,5 +1,6 @@
  # coding=utf-8
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.sql.elements import Null
 from project.api_struc.models import User, Exercise, Workout, Action, Challenge, UserChallenge, UserExercise, ChallengeExercise
 from project import app, db
 from project.misc.funcs import rand_string, rand_user_id
@@ -53,12 +54,13 @@ def create_db():
     db.session.commit()
 
 @manager.command
-def backup_dump():
+def backup_dump(filename=""):
     # print(os.listdir()): If run from VS Code debugger, we are in /home/Kantnprojekt_Backend
     import pathlib
     manage_path = pathlib.Path(__file__).parent.absolute()
     print(manage_path)
-    filename = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M.dump")
+    if filename == "":
+        filename = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M.dump")
     full_folder = os.path.join(manage_path, "project", "backups")
     os.makedirs(full_folder, exist_ok = True)
     # see https://stackoverflow.com/questions/4256107/running-bash-commands-in-python/51950538#51950538 for ultimate explenation of subprocess and bash commands
@@ -85,7 +87,7 @@ def restore_backup_dump(filename=""):
         filename = dirFiles[0]
     full_file = os.path.join(backup_path, filename)
     # bashCommand = "export PGPASSWORD='password'; psql -U kantn --host=localhost -d kantnprojekt < kantnprojekt /home/Kantnprojekt_Backend/services/web/project/backups/"+filename
-    bashCommand = "export PGPASSWORD='password'; psql -U kantn --host=localhost -d kantnprojekt < " + full_file
+    bashCommand = "export PGPASSWORD='password'; psql -U kantn --host=localhost -d kantnprojekt2 < " + full_file
     import subprocess
     import time
     # For some reason, pg_restore and 
@@ -176,6 +178,59 @@ def restore_backup_dump_docker(filename=""):
 #     output = subprocess.run(bashCommand, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, check=False, text = True)
 #     print(output.stdout)
 #     # subprocess.check_output()
+@manager.command
+def add_missing_user_exercises():
+    # check if user-exercises where deleted also (it should be!)
+    # db.session.commit()
+    for user in User.query.all():
+        for exercise in Exercise.query.all():
+            try:
+                us_ex = UserExercise.query.filter(UserExercise.exercise_id == exercise.id, UserExercise.user_id == user.id)
+            except Exception as e:
+                us_ex = Null
+            if us_ex is Null:
+                print("creating new UserExercise!")
+                us_ex = UserExercise(
+                    note = exercise.note,
+                    exercise_id = exercise.id,
+                    user_id = user.id,
+                    user = user,
+                    points = exercise.points,
+                    max_points_day = exercise.max_points_day,
+                    max_points_week = exercise.max_points_week,
+                    daily_allowance = exercise.daily_allowance,
+                    weekly_allowance = exercise.weekly_allowance,
+                )
+                db.session.add(us_ex)
+    db.session.commit()
+
+@manager.command
+def start_kantnprojekt_december():
+    # check if user-exercises where deleted also (it should be!)
+    # db.session.commit()
+    kantnprojekt = Challenge.query.filter(Challenge.name == "Kantnprojekt").first()
+    user_joel = User.query.filter(User.email == "joel.gotsch@gmail.com").first()
+    user_david  = User.query.filter(User.email == "davidstadler2@gmail.com").first()
+    kantnprojekt.start_date = datetime.datetime(2020,12,14)
+    try:
+        us_ch_joel = UserChallenge.query.filter(UserChallenge.user_id == user_joel.id, UserChallenge.challenge_id == kantnprojekt.id).first()
+        us_ch_joel.start_date = datetime.datetime(2020,12,14)
+    except:
+        us_ch_joel = UserChallenge(user_start_challenge = datetime.datetime(2020,12,14))
+        us_ch_joel.user = user_joel
+        us_ch_joel.challenge = kantnprojekt
+        db.session.add(us_ch_joel)
+    db.session.commit()
+    try:
+        us_ch_david = UserChallenge.query.filter(UserChallenge.user_id == user_david.id, UserChallenge.challenge_id == kantnprojekt.id).first()
+        us_ch_david.start_date = datetime.datetime(2020,12,14)
+    except:
+        us_ch_david = UserChallenge(user_start_challenge = datetime.datetime(2020,12,14))
+        us_ch_david.user = user_david
+        us_ch_david.challenge = kantnprojekt
+        db.session.add(us_ch_david)
+    db.session.commit()
+
 @manager.command
 def delete_wallsits():
     # check if user-exercises where deleted also (it should be!)

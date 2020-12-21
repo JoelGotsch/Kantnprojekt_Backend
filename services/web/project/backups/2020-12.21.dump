@@ -1,0 +1,817 @@
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 13rc1
+-- Dumped by pg_dump version 13rc1
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- Name: users; Type: TABLE; Schema: public; Owner: kantn
+--
+
+CREATE TABLE public.users (
+    id character varying(30) NOT NULL,
+    email character varying,
+    user_name character varying,
+    password character varying,
+    token character varying(30),
+    date_creation timestamp without time zone,
+    date_last_login timestamp without time zone
+);
+
+
+
+ALTER TABLE public.users OWNER TO kantn;
+
+--
+-- Name: workouts; Type: TABLE; Schema: public; Owner: kantn
+--
+
+CREATE TABLE public.workouts (
+    id character varying NOT NULL,
+    user_id character varying,
+    date timestamp without time zone,
+    note character varying,
+    latest_edit timestamp without time zone
+);
+
+
+ALTER TABLE public.workouts OWNER TO kantn;
+
+--
+-- Name: exercises; Type: TABLE; Schema: public; Owner: kantn
+--
+
+CREATE TABLE public.exercises (
+    id character varying NOT NULL,
+    title character varying,
+    note character varying,
+    description character varying,
+    user_id character varying,
+    unit character varying,
+    points double precision,
+    max_points_day double precision,
+    max_points_week double precision,
+    daily_allowance double precision,
+    weekly_allowance double precision,
+    checkbox boolean,
+    checkbox_reset integer,
+    latest_edit timestamp without time zone
+);
+
+
+ALTER TABLE public.exercises OWNER TO kantn;
+
+--
+-- Name: actions; Type: TABLE; Schema: public; Owner: kantn
+--
+
+CREATE TABLE public.actions (
+    id character varying NOT NULL,
+    exercise_id character varying,
+    workout_id character varying,
+    number double precision,
+    note character varying
+);
+
+
+ALTER TABLE public.actions OWNER TO kantn;
+
+--
+-- Name: challenge_exercises; Type: TABLE; Schema: public; Owner: kantn
+--
+
+CREATE TABLE public.challenge_exercises (
+    id character varying NOT NULL,
+    note character varying,
+    exercise_id character varying,
+    challenge_id character varying,
+    points double precision,
+    max_points_day double precision,
+    max_points_week double precision,
+    daily_allowance double precision,
+    weekly_allowance double precision,
+    latest_edit timestamp without time zone
+);
+
+
+ALTER TABLE public.challenge_exercises OWNER TO kantn;
+
+--
+-- Name: challenges; Type: TABLE; Schema: public; Owner: kantn
+--
+
+CREATE TABLE public.challenges (
+    id character varying NOT NULL,
+    name character varying,
+    description character varying,
+    min_points double precision,
+    eval_period character varying,
+    start_date timestamp without time zone,
+    end_date timestamp without time zone
+);
+
+
+ALTER TABLE public.challenges OWNER TO kantn;
+
+--
+-- Name: user_challenges; Type: TABLE; Schema: public; Owner: kantn
+--
+
+CREATE TABLE public.user_challenges (
+    user_id character varying NOT NULL,
+    challenge_id character varying NOT NULL,
+    user_start_challenge timestamp without time zone
+);
+
+
+ALTER TABLE public.user_challenges OWNER TO kantn;
+
+--
+-- Name: user_exercises; Type: TABLE; Schema: public; Owner: kantn
+--
+
+CREATE TABLE public.user_exercises (
+    id character varying NOT NULL,
+    note character varying,
+    exercise_id character varying,
+    user_id character varying,
+    points double precision,
+    max_points_day double precision,
+    max_points_week double precision,
+    daily_allowance double precision,
+    weekly_allowance double precision,
+    latest_edit timestamp without time zone,
+    private boolean
+);
+
+ALTER TABLE public.user_exercises OWNER TO kantn;
+
+
+--
+-- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: kantn
+--
+
+COPY public.users (id, email, user_name, password, token, date_creation, date_last_login) FROM stdin;
+u_9328162823	kantnprojekt@gmail.com	kantnprojekt	781500543b5461cbdf28f82e3d79a3d9	5tABELThgUIc5oH5j9jbIU2AKedRYa	2020-11-16 14:28:33.188284	2020-11-16 14:28:33.188505
+u_2422614162	christian@gmail.com	lubi	347cb769ec2644932728682a20b12ab7	ZmaY0hDa1wevvSds9tvbdWQAY9qYSa	2020-12-02 13:08:29.7582	2020-12-02 13:08:29.758279
+u_2815959624	test2@test.com	Test2	781500543b5461cbdf28f82e3d79a3d9	SoQn6R1vRgtMg2X9OH4jbEwFJj0zkP	2020-12-03 06:57:28.82786	2020-12-03 06:57:28.827935
+u_4985954568	janrschy.daniela@gmx.net	dani28	3fd303559f4bf5ae35b4b3c7a715186a	6hDahnlDKHOYbrTU6XyXNoEfJD4c6G	2020-12-03 11:10:28.653956	2020-12-03 11:10:28.654009
+u_1711712509	test@test.com	Test	781500543b5461cbdf28f82e3d79a3d9	FRCG82TQyC0br2hFwobFIlBzImJuxB	2020-12-02 13:30:54.730855	2020-12-04 08:04:51.767323
+u_2620483558	joel.gotsch2@gmail.com	Joel	781500543b5461cbdf28f82e3d79a3d9	0ekXVJAMUy1bEho8Tv1Imv6Ehvikb3	2020-12-03 11:10:28.653956	2020-12-03 11:10:28.654009
+u_3172059414	davidstadler2@gmail.com	Dave the Kantn	fc6a7d11dacc463aa96687860f4e82d5	lM2RmTpMpzEBHZ4T2KyJxrhsyy0wJB	2020-12-03 11:10:28.653956	2020-12-04 16:16:37.086301
+u_4429059737	maristos24@hotmail.com	Marian	aa779b937dfcce6c2dff545276978cc7	mdupGXDcQqYAT4WPakze5auC7Am5bZ	2020-12-06 11:04:34.096747	2020-12-06 11:04:34.096787
+u_297968086	joel.gotsch@gmail.com	Viech	781500543b5461cbdf28f82e3d79a3d9	IJyyJhgSlc4LjNOFmjWOIKZ0iRzQ6Y	2020-11-16 14:28:33.188284	2020-12-20 15:14:43.882719
+\.
+
+
+--
+-- Data for Name: exercises; Type: TABLE DATA; Schema: public; Owner: kantn
+--
+
+COPY public.exercises (id, title, note, description, user_id, unit, points, max_points_day, max_points_week, daily_allowance, weekly_allowance, checkbox, checkbox_reset, latest_edit) FROM stdin;
+voTplqeYW1osbsbSR9AbXLPXkDPI5p	Handstand	Kontrollierter Handstand		u_2422614162	min	30	0	0	0	0	f	2	2020-12-02 14:20:09.499925
+IbGhdbRN5Oezwg9PaAa8PzmDPT3PkD	\N	Duolingo points		u_297968086	points	0.3	0	0	0	0	f	2	2020-12-03 11:43:03.709115
+rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	Schritte	Anzahl der Schritte pro Tag. Jeder Schritt zählt 0.01 Punkte.		u_9328162823		0.01	0	0	0	0	f	2	2020-11-16 14:28:33.31034
+EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	Liegestütze	Jeder Liegestütz zählt 1 Punkt.		u_9328162823		1	0	0	0	0	f	2	2020-11-16 14:28:33.31035
+EEUnxv6rUfTMBnDg4pUv20leytTe8m	Situps	Jeder Situp zählt 0.25 Punkte.		u_9328162823		0.25	0	0	0	0	f	2	2020-11-16 14:28:33.310355
+tSIqZY5iW628qOJjL8Q6wmcNEKRP8H	Klimmzüge	Jeder Klimmzug zählt 4 Punkte.		u_9328162823		4	0	0	0	0	f	2	2020-11-16 14:28:33.31036
+aoHxlafVvY5bQ20H4B0jyT0uicZqA9	Hollow Hold	Jede Minute im Hollow Hold zählt 20 Punkte.		u_9328162823	min	20	0	0	0	0	f	2	2020-11-16 14:28:33.31323
+1ff8680KcJHiBsQnsGDLeTBHpn36RY	Plank	Alle Versionen sind OK: Front-Plank, Side-Plank,... 15 Punkte pro Minute		u_9328162823	min	15	0	0	0	0	f	2	2020-11-16 14:28:33.313237
+L14PhR4kXbeEdyAxYMEvELKfTEvO3M	(Wand-) Handstand	Handstand an der Wand oder freistehend. 25 Punkte pro Minute		u_9328162823	min	25	0	0	0	0	f	2	2020-11-16 14:28:33.313242
+KCcROl3v1K8vHAjebKisUiicCrNzN9	Superman	Bauch am Boden, Arme nach vorne und Beine hinten in die Luft gestreckt, Hintern anspannen.		u_9328162823	min	10	0	0	0	0	f	2	2020-11-16 14:28:33.313247
+KuDtrxGTumpQxX8OoXckho1lMh7BeP	Schlaf	Jede Stunde Schlaf bringt 10 Punkte. Aber maximal 80 Punkte pro Tag/Nacht.		u_9328162823	h	10	80	0	0	0	f	2	2020-11-16 14:28:33.315164
+AdpTlzNqsncSFsxpnKwjXSwLZzMhHj	Alkohol	Für jedes Bier (oder etwa äquivalente Menge Alkohol) gibt es 50 Punkte Abzug. Ein Bier pro Woche ist aber frei.		u_9328162823	Bier	-50	0	0	0	1	f	2	2020-11-16 14:28:33.316084
+Xa6IKCmdxTAnoaLlzyiTVJ84iPRYDL	Yoga	Alle Yoga Formen sind OK.		u_9328162823	min	3	0	0	0	0	f	2	2020-11-16 14:28:33.316898
+\.
+
+
+--
+-- Data for Name: challenges; Type: TABLE DATA; Schema: public; Owner: kantn
+--
+
+COPY public.challenges (id, name, description, min_points, eval_period, start_date, end_date) FROM stdin;
+v5WHjqtsloj3nCvRRsWcezK26toNuV	Kantnprojekt	2000 Punkte pro Kalenderwoche müssen erreicht werden. Diese setzen sich aus allen Übungen inklusive Schlaf und abzüglich Alkohol zusammen.	2000	week	2020-11-16 14:28:33.345367	2021-02-14 14:28:33.345369
+\.
+
+
+--
+-- Data for Name: challenge_exercises; Type: TABLE DATA; Schema: public; Owner: kantn
+--
+
+COPY public.challenge_exercises (id, note, exercise_id, challenge_id, points, max_points_day, max_points_week, daily_allowance, weekly_allowance, latest_edit) FROM stdin;
+fNxRIgNVsMkH34ZtQnTavg6IWDlbWZ	Anzahl der Schritte pro Tag. Jeder Schritt zählt 0.01 Punkte.	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	v5WHjqtsloj3nCvRRsWcezK26toNuV	0.01	0	0	0	0	2020-11-16 14:28:33.354068
+MtT7kNOGDxFE20BPqpaZxwdIOWhwNN	Jeder Liegestütz zählt 1 Punkt.	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	v5WHjqtsloj3nCvRRsWcezK26toNuV	1	0	0	0	0	2020-11-16 14:28:33.362573
+u2rx9Es0eKKEA3JW9TGOqb0GpIzMoY	Jeder Situp zählt 0.25 Punkte.	EEUnxv6rUfTMBnDg4pUv20leytTe8m	v5WHjqtsloj3nCvRRsWcezK26toNuV	0.25	0	0	0	0	2020-11-16 14:28:33.369197
+iBI7zkCQMKj22wSLgkF8NlGG1CABJI	Jeder Klimmzug zählt 4 Punkte.	tSIqZY5iW628qOJjL8Q6wmcNEKRP8H	v5WHjqtsloj3nCvRRsWcezK26toNuV	4	0	0	0	0	2020-11-16 14:28:33.375959
+ea6ALDBGw235RWMDhhxm8gNn0FrVN4	Jede Minute im Hollow Hold zählt 20 Punkte.	aoHxlafVvY5bQ20H4B0jyT0uicZqA9	v5WHjqtsloj3nCvRRsWcezK26toNuV	20	0	0	0	0	2020-11-16 14:28:33.382168
+wKv7Skck3qPDnDTNEtncoxCIIJKUhN	Alle Versionen sind OK: Front-Plank, Side-Plank,... 15 Punkte pro Minute	1ff8680KcJHiBsQnsGDLeTBHpn36RY	v5WHjqtsloj3nCvRRsWcezK26toNuV	15	0	0	0	0	2020-11-16 14:28:33.388543
+BY6hmaAtMpwmcDXdpXawrOybfAsxlv	Handstand an der Wand oder freistehend. 25 Punkte pro Minute	L14PhR4kXbeEdyAxYMEvELKfTEvO3M	v5WHjqtsloj3nCvRRsWcezK26toNuV	25	0	0	0	0	2020-11-16 14:28:33.394943
+BksqypgDMVA2AqLLSHIZRncw7wuPbq	Bauch am Boden, Arme nach vorne und Beine hinten in die Luft gestreckt, Hintern anspannen.	KCcROl3v1K8vHAjebKisUiicCrNzN9	v5WHjqtsloj3nCvRRsWcezK26toNuV	10	0	0	0	0	2020-11-16 14:28:33.401704
+A7bZAkkqMjcaxw1HDuxWhDdf9lLeZ5	Jede Stunde Schlaf bringt 10 Punkte. Aber maximal 80 Punkte pro Tag/Nacht.	KuDtrxGTumpQxX8OoXckho1lMh7BeP	v5WHjqtsloj3nCvRRsWcezK26toNuV	10	80	0	0	0	2020-11-16 14:28:33.40812
+1g256fwdQnWSeR8c21Srg3S8eW5PcZ	Für jedes Bier (oder etwa äquivalente Menge Alkohol) gibt es 50 Punkte Abzug. Ein Bier pro Woche ist aber frei.	AdpTlzNqsncSFsxpnKwjXSwLZzMhHj	v5WHjqtsloj3nCvRRsWcezK26toNuV	-50	0	0	0	1	2020-11-16 14:28:33.414381
+RmJR3GP5qUUeBhUEOxWxLyJS7JPuT5	Alle Yoga Formen sind OK.	Xa6IKCmdxTAnoaLlzyiTVJ84iPRYDL	v5WHjqtsloj3nCvRRsWcezK26toNuV	3	0	0	0	0	2020-11-16 14:28:33.421407
+\.
+
+
+--
+-- Data for Name: user_challenges; Type: TABLE DATA; Schema: public; Owner: kantn
+--
+
+COPY public.user_challenges (user_id, challenge_id, user_start_challenge) FROM stdin;
+u_297968086	v5WHjqtsloj3nCvRRsWcezK26toNuV	2020-11-16 14:28:33.20934
+\.
+
+
+--
+-- Data for Name: user_exercises; Type: TABLE DATA; Schema: public; Owner: kantn
+--
+
+COPY public.user_exercises (id, note, exercise_id, user_id, points, max_points_day, max_points_week, daily_allowance, weekly_allowance, latest_edit, private) FROM stdin;
+BS4Zzc96EjIpspam1kMmmEGcVd8EjJ	Jeder Liegestütz zählt 1 Punkt.	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	u_4429059737	1	0	0	0	0	2020-12-06 18:37:10.946351	f
+xJWg8UE64adNfmrrZLU7gUYZdA1ggL	Anzahl der Schritte pro Tag. Jeder Schritt zählt 0.01 Punkte.	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	u_4429059737	0.01	0	0	0	0	2020-12-06 18:37:10.957496	f
+fdXNYz5IvK598tPAWWV74LAEzGX2Lj	Jeder Situp zählt 0.25 Punkte.	EEUnxv6rUfTMBnDg4pUv20leytTe8m	u_4429059737	0.25	0	0	0	0	2020-12-06 18:37:10.95863	f
+TRFKDRZieJRAa6QCTFu7ujd6Qsz4eH	Jeder Klimmzug zählt 4 Punkte.	tSIqZY5iW628qOJjL8Q6wmcNEKRP8H	u_4429059737	4	0	0	0	0	2020-12-06 18:37:10.959503	f
+IFoc0SvCDkn0IiHpr3PEJHOWP4DWNJ	Jede Minute im Hollow Hold zählt 20 Punkte.	aoHxlafVvY5bQ20H4B0jyT0uicZqA9	u_4429059737	20	0	0	0	0	2020-12-06 18:37:10.960454	f
+pvFZY3nYnmQPYI8QQstVOpyHvMzQoa	Alle Versionen sind OK: Front-Plank, Side-Plank,... 15 Punkte pro Minute	1ff8680KcJHiBsQnsGDLeTBHpn36RY	u_4429059737	15	0	0	0	0	2020-12-06 18:37:10.961299	f
+WW2dtLyqu0yV0Al1VB6UAKWfYobOyr	Handstand an der Wand oder freistehend. 25 Punkte pro Minute	L14PhR4kXbeEdyAxYMEvELKfTEvO3M	u_4429059737	25	0	0	0	0	2020-12-06 18:37:10.962201	f
+g8D8JgBpy8jVGoPp0ps3Lwnh5dC7TN	Bauch am Boden, Arme nach vorne und Beine hinten in die Luft gestreckt, Hintern anspannen.	KCcROl3v1K8vHAjebKisUiicCrNzN9	u_4429059737	10	0	0	0	0	2020-12-06 18:37:10.962986	f
+TzovFpKBcVzv7gXYanlu0RwkBLN52J	Jede Stunde Schlaf bringt 10 Punkte. Aber maximal 80 Punkte pro Tag/Nacht.	KuDtrxGTumpQxX8OoXckho1lMh7BeP	u_4429059737	10	80	0	0	0	2020-12-06 18:37:10.963793	f
+oH9fOi48snDoLOIJXAyrfjcT9Ox4vq	Für jedes Bier (oder etwa äquivalente Menge Alkohol) gibt es 50 Punkte Abzug. Ein Bier pro Woche ist aber frei.	AdpTlzNqsncSFsxpnKwjXSwLZzMhHj	u_4429059737	-50	0	0	0	1	2020-12-06 18:37:10.964547	f
+ZBLo2wkIQD1nmqLZ3KLOKUuV46EDDY	Alle Yoga Formen sind OK.	Xa6IKCmdxTAnoaLlzyiTVJ84iPRYDL	u_4429059737	3	0	0	0	0	2020-12-06 18:37:10.965897	f
+c5G93hBRtfYnaOeWrf29W2nkdayO7g	Anzahl der Schritte pro Tag. Jeder Schritt zählt 0.01 Punkte.	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	u_3172059414	0.01	0	0	0	0	2020-12-03 22:54:55.831955	f
+7uDHuyGwXp5vavdUtky5kMEqZ9q5nf	Jeder Liegestütz zählt 1 Punkt.	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	u_3172059414	1	0	0	0	0	2020-12-03 22:54:55.84123	f
+FgDZN4F5wugXoJebKN2rhWFMypcnTM	Jeder Situp zählt 0.25 Punkte.	EEUnxv6rUfTMBnDg4pUv20leytTe8m	u_3172059414	0.25	0	0	0	0	2020-12-03 22:54:55.842459	f
+g7WCAmfm3cdHnVMVE0qtSu6xTqiUJl	Jeder Klimmzug zählt 4 Punkte.	tSIqZY5iW628qOJjL8Q6wmcNEKRP8H	u_3172059414	4	0	0	0	0	2020-12-03 22:54:55.843637	f
+WZgviXYcEdGNjI6m4J2FWS6qsLId0R	Jede Minute im Hollow Hold zählt 20 Punkte.	aoHxlafVvY5bQ20H4B0jyT0uicZqA9	u_3172059414	20	0	0	0	0	2020-12-03 22:54:55.844782	f
+OHu8oyetmQxroJCAw1nUMI0YgFevJN	Alle Versionen sind OK: Front-Plank, Side-Plank,... 15 Punkte pro Minute	1ff8680KcJHiBsQnsGDLeTBHpn36RY	u_3172059414	15	0	0	0	0	2020-12-03 22:54:55.845986	f
+YPQdRVv7QYziBaZNVBuQd6Yb261DwT	Handstand an der Wand oder freistehend. 25 Punkte pro Minute	L14PhR4kXbeEdyAxYMEvELKfTEvO3M	u_3172059414	25	0	0	0	0	2020-12-03 22:54:55.852206	f
+p0FuvxFkV8ZCJKOTbqXXRxi17k5m0p	Bauch am Boden, Arme nach vorne und Beine hinten in die Luft gestreckt, Hintern anspannen.	KCcROl3v1K8vHAjebKisUiicCrNzN9	u_3172059414	10	0	0	0	0	2020-12-03 22:54:55.853504	f
+tjC8Uv95NuLE7djdhzXJ3AJ8Vcm9Js	Jede Stunde Schlaf bringt 10 Punkte. Aber maximal 80 Punkte pro Tag/Nacht.	KuDtrxGTumpQxX8OoXckho1lMh7BeP	u_3172059414	10	80	0	0	0	2020-12-03 22:54:55.854674	f
+yBlEON1KPx2J9uDRvET1OgJQiwTmlV	Für jedes Bier (oder etwa äquivalente Menge Alkohol) gibt es 50 Punkte Abzug. Ein Bier pro Woche ist aber frei.	AdpTlzNqsncSFsxpnKwjXSwLZzMhHj	u_3172059414	-50	0	0	0	1	2020-12-03 22:54:55.855804	f
+yYCqDyLUgmfFltm491vUMRiZRXZWnN	Alle Yoga Formen sind OK.	Xa6IKCmdxTAnoaLlzyiTVJ84iPRYDL	u_3172059414	3	0	0	0	0	2020-12-03 22:54:55.857082	f
+tgal7uixdsDthyKwWuJpJKW3iE4PYc	Anzahl der Schritte pro Tag. Jeder Schritt zählt 0.01 Punkte.	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	u_4985954568	0.01	0	0	0	0	2020-12-03 23:05:58.143558	f
+faIW61C5uvmrVDRjKRsdjqLAo3Aa7c	Jeder Liegestütz zählt 1 Punkt.	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	u_4985954568	1	0	0	0	0	2020-12-03 23:05:58.145091	f
+0giKvSlVrd5PtxeoMKWFoXZxBR53D8	Jeder Situp zählt 0.25 Punkte.	EEUnxv6rUfTMBnDg4pUv20leytTe8m	u_4985954568	0.25	0	0	0	0	2020-12-03 23:05:58.152178	f
+yczpWRcCQBH5XQgEjlLIm2JLX7U6cu	Jeder Klimmzug zählt 4 Punkte.	tSIqZY5iW628qOJjL8Q6wmcNEKRP8H	u_4985954568	4	0	0	0	0	2020-12-03 23:05:58.153384	f
+5w3e7gAn4c9GpW7ljFTWAUYPHy8UtM	Jede Minute im Hollow Hold zählt 20 Punkte.	aoHxlafVvY5bQ20H4B0jyT0uicZqA9	u_4985954568	20	0	0	0	0	2020-12-03 23:05:58.154509	f
+B2u8Bxu2r4LqzrjvFUoukqHJI5QbRz	Alle Versionen sind OK: Front-Plank, Side-Plank,... 15 Punkte pro Minute	1ff8680KcJHiBsQnsGDLeTBHpn36RY	u_4985954568	15	0	0	0	0	2020-12-03 23:05:58.155684	f
+W9VlOLCk7ETjb17FQen8KykjSLsRiN	Handstand an der Wand oder freistehend. 25 Punkte pro Minute	L14PhR4kXbeEdyAxYMEvELKfTEvO3M	u_4985954568	25	0	0	0	0	2020-12-03 23:05:58.156837	f
+u88lXVNXNJxirJ5HHZl7BwuXDyIVoK	Bauch am Boden, Arme nach vorne und Beine hinten in die Luft gestreckt, Hintern anspannen.	KCcROl3v1K8vHAjebKisUiicCrNzN9	u_4985954568	10	0	0	0	0	2020-12-03 23:05:58.158006	f
+SclrpYzN0qOnkN1PlTkQbXYKRcke8V	Jede Stunde Schlaf bringt 10 Punkte. Aber maximal 80 Punkte pro Tag/Nacht.	KuDtrxGTumpQxX8OoXckho1lMh7BeP	u_4985954568	10	80	0	0	0	2020-12-03 23:05:58.160007	f
+gKfLUSoD1wWY6BTruUU5KqSEI8TYF2	Jeder Liegestütz zählt 1 Punkt.	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	u_9328162823	1	0	0	0	0	2020-11-16 14:28:33.326949	f
+3OLHqj7SdmfEInWBaQ7aMl3MMTlVze	Für jedes Bier (oder etwa äquivalente Menge Alkohol) gibt es 50 Punkte Abzug. Ein Bier pro Woche ist aber frei.	AdpTlzNqsncSFsxpnKwjXSwLZzMhHj	u_4985954568	-50	0	0	0	1	2020-12-03 23:05:58.164094	f
+XaTIlZowCh77RoSQ6ZXPvQPNULrwZY	Alle Yoga Formen sind OK.	Xa6IKCmdxTAnoaLlzyiTVJ84iPRYDL	u_4985954568	3	0	0	0	0	2020-12-03 23:05:58.16529	f
+nlcchJXOlHj8Xsop6mVtyAPaKXmLB3	Anzahl der Schritte pro Tag. Jeder Schritt zählt 0.01 Punkte.	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	u_2620483558	0.01	0	0	0	0	2020-12-04 08:06:33.147703	f
+l7NBawbOvFVku9X8TZZUok95NpJC8M	Jeder Liegestütz zählt 1 Punkt.	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	u_2620483558	1	0	0	0	0	2020-12-04 08:06:33.14929	f
+VuAaOCl4AAEy52v5sgBMzJ7v1HxfJB	Jeder Situp zählt 0.25 Punkte.	EEUnxv6rUfTMBnDg4pUv20leytTe8m	u_2620483558	0.25	0	0	0	0	2020-12-04 08:06:33.156122	f
+kdl6yfDfXVRPQGpKrOxHj2IATCN9ni	Jeder Klimmzug zählt 4 Punkte.	tSIqZY5iW628qOJjL8Q6wmcNEKRP8H	u_2620483558	4	0	0	0	0	2020-12-04 08:06:33.157292	f
+2W8i5mMJy7M4cIvk2wUfX8lqmse1te	Jede Minute im Hollow Hold zählt 20 Punkte.	aoHxlafVvY5bQ20H4B0jyT0uicZqA9	u_2620483558	20	0	0	0	0	2020-12-04 08:06:33.158422	f
+Jqyv0jd6DnsAFYevU7BzYD7wDlSICd	Alle Versionen sind OK: Front-Plank, Side-Plank,... 15 Punkte pro Minute	1ff8680KcJHiBsQnsGDLeTBHpn36RY	u_2620483558	15	0	0	0	0	2020-12-04 08:06:33.159516	f
+a1EQRQqVDA5WDaHPbBObCqTasQQdnW	Handstand an der Wand oder freistehend. 25 Punkte pro Minute	L14PhR4kXbeEdyAxYMEvELKfTEvO3M	u_2620483558	25	0	0	0	0	2020-12-04 08:06:33.160596	f
+XFJey602hx9kvgfCB4qx4P2QlD9tB7	Bauch am Boden, Arme nach vorne und Beine hinten in die Luft gestreckt, Hintern anspannen.	KCcROl3v1K8vHAjebKisUiicCrNzN9	u_2620483558	10	0	0	0	0	2020-12-04 08:06:33.161672	f
+Cffviz39yWlDiJg6wJilzn8nbIxlBY	Jede Stunde Schlaf bringt 10 Punkte. Aber maximal 80 Punkte pro Tag/Nacht.	KuDtrxGTumpQxX8OoXckho1lMh7BeP	u_2620483558	10	80	0	0	0	2020-12-04 08:06:33.168173	f
+byTS7JTmMN0zA1LZP7zAPPff8WQbcr	Für jedes Bier (oder etwa äquivalente Menge Alkohol) gibt es 50 Punkte Abzug. Ein Bier pro Woche ist aber frei.	AdpTlzNqsncSFsxpnKwjXSwLZzMhHj	u_2620483558	-50	0	0	0	1	2020-12-04 08:06:33.169605	f
+LTdxr1BUcGU9H8k7EXRliRFqlBugdm	Alle Yoga Formen sind OK.	Xa6IKCmdxTAnoaLlzyiTVJ84iPRYDL	u_2620483558	3	0	0	0	0	2020-12-04 08:06:33.170817	f
+4de2ixsmYtFI3NxNyP4dbCcEaPedIU	Anzahl der Schritte pro Tag. Jeder Schritt zählt 0.01 Punkte.	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	u_2422614162	0.01	0	0	0	0	2020-12-02 13:08:52.477817	f
+hjV1o0RPl0lqQzVpzU0nplAK6vZHLw	Jeder Liegestütz zählt 1 Punkt.	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	u_2422614162	1	0	0	0	0	2020-12-02 13:08:52.485915	f
+SU9js8wqjtvtVwfRM0KHfSFWnZBvz6	Jeder Situp zählt 0.25 Punkte.	EEUnxv6rUfTMBnDg4pUv20leytTe8m	u_2422614162	0.25	0	0	0	0	2020-12-02 13:08:52.487215	f
+XyyWnRnhM0GDKO3I5RlUoiwKBP6xXj	Jeder Klimmzug zählt 4 Punkte.	tSIqZY5iW628qOJjL8Q6wmcNEKRP8H	u_2422614162	4	0	0	0	0	2020-12-02 13:08:52.488418	f
+nY7XQ3sfNDBkzbkzlM1SU4vIXgzf6P	Jede Minute im Hollow Hold zählt 20 Punkte.	aoHxlafVvY5bQ20H4B0jyT0uicZqA9	u_2422614162	20	0	0	0	0	2020-12-02 13:08:52.489546	f
+1819jQOvKvcKBENWuO0twJv0sv64si	Alle Versionen sind OK: Front-Plank, Side-Plank,... 15 Punkte pro Minute	1ff8680KcJHiBsQnsGDLeTBHpn36RY	u_2422614162	15	0	0	0	0	2020-12-02 13:08:52.490723	f
+u5DSPNSqqEmPyB4Ar65wubg4B7KRO4	Handstand an der Wand oder freistehend. 25 Punkte pro Minute	L14PhR4kXbeEdyAxYMEvELKfTEvO3M	u_2422614162	25	0	0	0	0	2020-12-02 13:08:52.492405	f
+UUw3ik0HUMbDqs2iT0JODSEWw7iw5o	Bauch am Boden, Arme nach vorne und Beine hinten in die Luft gestreckt, Hintern anspannen.	KCcROl3v1K8vHAjebKisUiicCrNzN9	u_2422614162	10	0	0	0	0	2020-12-02 13:08:52.49348	f
+75ipA8ZKf5fgF2DixbGV1YaI9fAhVU	Jede Stunde Schlaf bringt 10 Punkte. Aber maximal 80 Punkte pro Tag/Nacht.	KuDtrxGTumpQxX8OoXckho1lMh7BeP	u_2422614162	10	80	0	0	0	2020-12-02 13:08:52.494502	f
+5mvWJRUN0ru2VlUymu8VZBxinavkFf	Für jedes Bier (oder etwa äquivalente Menge Alkohol) gibt es 50 Punkte Abzug. Ein Bier pro Woche ist aber frei.	AdpTlzNqsncSFsxpnKwjXSwLZzMhHj	u_2422614162	-50	0	0	0	1	2020-12-02 13:08:52.495586	f
+VcRAny3c4PYNXhpeMHlmcifmEkuP84	Alle Yoga Formen sind OK.	Xa6IKCmdxTAnoaLlzyiTVJ84iPRYDL	u_2422614162	3	0	0	0	0	2020-12-02 13:08:52.496631	f
+Hqsh0yfcs2QYsRGGhtDsh0ZiLbWY72	Anzahl der Schritte pro Tag. Jeder Schritt zählt 0.01 Punkte.	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	u_1711712509	0.01	0	0	0	0	2020-12-02 13:41:34.385505	f
+Vug75yFtoqEn57KnCFf2HM68UaYkaE	Jeder Liegestütz zählt 1 Punkt.	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	u_1711712509	1	0	0	0	0	2020-12-02 13:41:34.388163	f
+woVh14Jox1cj5eCdYpHNdkdDiK8BQm	Jeder Situp zählt 0.25 Punkte.	EEUnxv6rUfTMBnDg4pUv20leytTe8m	u_1711712509	0.25	0	0	0	0	2020-12-02 13:41:34.389286	f
+8I7FjhaQB7IleaBIEM7URXNLDTSNXm	Jeder Klimmzug zählt 4 Punkte.	tSIqZY5iW628qOJjL8Q6wmcNEKRP8H	u_1711712509	4	0	0	0	0	2020-12-02 13:41:34.390427	f
+yMzFCqSsANEqVgbeyg705oK9wFYTec	Jede Minute im Hollow Hold zählt 20 Punkte.	aoHxlafVvY5bQ20H4B0jyT0uicZqA9	u_1711712509	20	0	0	0	0	2020-12-02 13:41:34.391867	f
+0sjW9AxXPbCg2zBiy4dpYCse5YYjwk	Alle Versionen sind OK: Front-Plank, Side-Plank,... 15 Punkte pro Minute	1ff8680KcJHiBsQnsGDLeTBHpn36RY	u_1711712509	15	0	0	0	0	2020-12-02 13:41:34.392963	f
+aW4nXFfe52ORfIyZ6WM7gyps94eHt7	Handstand an der Wand oder freistehend. 25 Punkte pro Minute	L14PhR4kXbeEdyAxYMEvELKfTEvO3M	u_1711712509	25	0	0	0	0	2020-12-02 13:41:34.394047	f
+rllw3kqfnHEqOcQuA6XHCmyhorBDqm	Bauch am Boden, Arme nach vorne und Beine hinten in die Luft gestreckt, Hintern anspannen.	KCcROl3v1K8vHAjebKisUiicCrNzN9	u_1711712509	10	0	0	0	0	2020-12-02 13:41:34.395002	f
+7eQeziuxMUAfiHNE1vWmsqJ3YKfmKC	Jede Stunde Schlaf bringt 10 Punkte. Aber maximal 80 Punkte pro Tag/Nacht.	KuDtrxGTumpQxX8OoXckho1lMh7BeP	u_1711712509	10	80	0	0	0	2020-12-02 13:41:34.396189	f
+mEFQ3rCt8hyaK2ZJb81wZiyLFxnt3I	Für jedes Bier (oder etwa äquivalente Menge Alkohol) gibt es 50 Punkte Abzug. Ein Bier pro Woche ist aber frei.	AdpTlzNqsncSFsxpnKwjXSwLZzMhHj	u_1711712509	-50	0	0	0	1	2020-12-02 13:41:34.397129	f
+TkNlhFnvCcwBco0cDGFRWy3WIzQjBe	Alle Yoga Formen sind OK.	Xa6IKCmdxTAnoaLlzyiTVJ84iPRYDL	u_1711712509	3	0	0	0	0	2020-12-02 13:41:34.398163	f
+kjeZ1vBAHUs8OXG6290YavDHWeKGU1	Anzahl der Schritte pro Tag. Jeder Schritt zählt 0.01 Punkte.	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	u_9328162823	0.01	0	0	0	0	2020-11-16 14:28:33.325616	f
+pkk418UqWu7gvZWykfQfnvb94IKsFx	Jeder Situp zählt 0.25 Punkte.	EEUnxv6rUfTMBnDg4pUv20leytTe8m	u_9328162823	0.25	0	0	0	0	2020-11-16 14:28:33.327596	f
+71owq1qb8WaU4a8aFDlVjm2L0V5VAI	Jeder Klimmzug zählt 4 Punkte.	tSIqZY5iW628qOJjL8Q6wmcNEKRP8H	u_9328162823	4	0	0	0	0	2020-11-16 14:28:33.328341	f
+EyMuOYm4a5HtwXcA16nn43txoXhFg0	Jede Minute im Hollow Hold zählt 20 Punkte.	aoHxlafVvY5bQ20H4B0jyT0uicZqA9	u_9328162823	20	0	0	0	0	2020-11-16 14:28:33.328974	f
+1iUnWNkuNDjM4jr8sopPtTeMaZnt2n	Alle Versionen sind OK: Front-Plank, Side-Plank,... 15 Punkte pro Minute	1ff8680KcJHiBsQnsGDLeTBHpn36RY	u_9328162823	15	0	0	0	0	2020-11-16 14:28:33.329594	f
+8mxr5jAY0AjYv60Wp1m2wFryhjWyjq	Handstand an der Wand oder freistehend. 25 Punkte pro Minute	L14PhR4kXbeEdyAxYMEvELKfTEvO3M	u_9328162823	25	0	0	0	0	2020-11-16 14:28:33.330295	f
+bJI64pTNNExnMvQHZZY5kUwFzmO6xh	Bauch am Boden, Arme nach vorne und Beine hinten in die Luft gestreckt, Hintern anspannen.	KCcROl3v1K8vHAjebKisUiicCrNzN9	u_9328162823	10	0	0	0	0	2020-11-16 14:28:33.33085	f
+zs48BGvHrLYmxriZC7qHyj0og8fnUV	Jede Stunde Schlaf bringt 10 Punkte. Aber maximal 80 Punkte pro Tag/Nacht.	KuDtrxGTumpQxX8OoXckho1lMh7BeP	u_9328162823	10	80	0	0	0	2020-11-16 14:28:33.331465	f
+EWkhX1nk0JUDX8omKD7OYAseDmAttg	Für jedes Bier (oder etwa äquivalente Menge Alkohol) gibt es 50 Punkte Abzug. Ein Bier pro Woche ist aber frei.	AdpTlzNqsncSFsxpnKwjXSwLZzMhHj	u_9328162823	-50	0	0	0	1	2020-11-16 14:28:33.332025	f
+VegygU7e2yzelEjJHMVSwv3OPnWFUM	Alle Yoga Formen sind OK.	Xa6IKCmdxTAnoaLlzyiTVJ84iPRYDL	u_9328162823	3	0	0	0	0	2020-11-16 14:28:33.332527	f
+uVeG4spqYmiIfCNHVymhwiw4e41K3x	Anzahl der Schritte pro Tag. Jeder Schritt zählt 0.01 Punkte.	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	u_297968086	0.01	0	0	0	0	2020-11-16 14:28:33.337592	f
+5hkOJI0d8vLamnBZnTIW5p4n1DQMDA	Jeder Situp zählt 0.25 Punkte.	EEUnxv6rUfTMBnDg4pUv20leytTe8m	u_297968086	0.25	0	0	0	0	2020-11-16 14:28:33.338774	f
+0ZWFt3OoQZl6eb0No5OeUjZMBDrAQr	Alle Versionen sind OK: Front-Plank, Side-Plank,... 15 Punkte pro Minute	1ff8680KcJHiBsQnsGDLeTBHpn36RY	u_297968086	15	0	0	0	0	2020-11-16 14:28:33.34041	f
+EvwKyMNtLFHfz4Kq9lCtQOO1dBsnAy	Handstand an der Wand oder freistehend. 25 Punkte pro Minute	L14PhR4kXbeEdyAxYMEvELKfTEvO3M	u_297968086	25	0	0	0	0	2020-11-16 14:28:33.340913	f
+JiNX6rtktp1i8sAYrNq8io7istVGq3	Bauch am Boden, Arme nach vorne und Beine hinten in die Luft gestreckt, Hintern anspannen.	KCcROl3v1K8vHAjebKisUiicCrNzN9	u_297968086	10	0	0	0	0	2020-11-16 14:28:33.341543	f
+TGQGeCFIwk3sJffX1GBlHUSc3EQhGn	Jede Stunde Schlaf bringt 10 Punkte. Aber maximal 80 Punkte pro Tag/Nacht.	KuDtrxGTumpQxX8OoXckho1lMh7BeP	u_297968086	10	80	0	0	0	2020-11-16 14:28:33.342072	f
+6EBG0DL03Um62Hl1r6pyvHdjNweDi0	Für jedes Bier (oder etwa äquivalente Menge Alkohol) gibt es 50 Punkte Abzug. Ein Bier pro Woche ist aber frei.	AdpTlzNqsncSFsxpnKwjXSwLZzMhHj	u_297968086	-50	0	0	0	1	2020-11-16 14:28:33.342628	f
+kpu4z5GzLYa5d9ScGDHlKDm1bycNF7	Alle Yoga Formen sind OK.	Xa6IKCmdxTAnoaLlzyiTVJ84iPRYDL	u_297968086	3	0	0	0	0	2020-11-16 14:28:33.343144	f
+mWiPtiaK3d0AbBktXDLvcIbIM9BSpG	Jeder Klimmzug zählt 4 Punkte.	tSIqZY5iW628qOJjL8Q6wmcNEKRP8H	u_297968086	4	0	0	0	0	2020-11-29 15:15:05.08849	\N
+QALgPRRz1JkKhH7sfKQNOOkmd0WBaO	Jede Minute im Hollow Hold zählt 20 Punkte.	aoHxlafVvY5bQ20H4B0jyT0uicZqA9	u_297968086	30	0	0	0	0	2020-11-27 01:18:53.769774	\N
+aSFWD9Df5axRtidzKPhMSXyq8kkL6u	Jeder Liegestütz zählt 1 Punkt.	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	u_297968086	1	0	0	0	0	2020-11-27 01:24:55.120139	\N
+BbFCFW1h93FT5JqwHHxIOJxtwftusP	Kontrollierter Handstand	voTplqeYW1osbsbSR9AbXLPXkDPI5p	u_2422614162	30	0	0	0	0	2020-12-02 14:20:09.499925	f
+14MKJbASXLAPMg9vJeKa6gps2Waf1k	Anzahl der Schritte pro Tag. Jeder Schritt zählt 0.01 Punkte.	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	u_2815959624	0.01	0	0	0	0	2020-12-03 09:05:53.129714	f
+b9z8ce3eh6aNnZ3E4cSkpoqj9gzxN3	Jeder Liegestütz zählt 1 Punkt.	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	u_2815959624	1	0	0	0	0	2020-12-03 09:05:53.132954	f
+rLngA34VU5IhFaSl79Zbd8BQGRnB7g	Jeder Situp zählt 0.25 Punkte.	EEUnxv6rUfTMBnDg4pUv20leytTe8m	u_2815959624	0.25	0	0	0	0	2020-12-03 09:05:53.134095	f
+L5nbTO8hee2LsAJDgIXaqnY5DKxg6D	Jeder Klimmzug zählt 4 Punkte.	tSIqZY5iW628qOJjL8Q6wmcNEKRP8H	u_2815959624	4	0	0	0	0	2020-12-03 09:05:53.13512	f
+wc8flEGt5V18c2esuZraNgXtij9wsG	Jede Minute im Hollow Hold zählt 20 Punkte.	aoHxlafVvY5bQ20H4B0jyT0uicZqA9	u_2815959624	20	0	0	0	0	2020-12-03 09:05:53.136295	f
+EpBbHK8KCKWB8sPPjf52bzlqOlsfie	Alle Versionen sind OK: Front-Plank, Side-Plank,... 15 Punkte pro Minute	1ff8680KcJHiBsQnsGDLeTBHpn36RY	u_2815959624	15	0	0	0	0	2020-12-03 09:05:53.137332	f
+Pc18YVwXaNImnBXWBnCz3Vdzx75yJb	Handstand an der Wand oder freistehend. 25 Punkte pro Minute	L14PhR4kXbeEdyAxYMEvELKfTEvO3M	u_2815959624	25	0	0	0	0	2020-12-03 09:05:53.138382	f
+wrKzVsGaGI1AQcdAoOFVcFCM7wy9Jm	Bauch am Boden, Arme nach vorne und Beine hinten in die Luft gestreckt, Hintern anspannen.	KCcROl3v1K8vHAjebKisUiicCrNzN9	u_2815959624	10	0	0	0	0	2020-12-03 09:05:53.139376	f
+93os5mqMzCSbFgWJHlrNjggQnAYy9I	Jede Stunde Schlaf bringt 10 Punkte. Aber maximal 80 Punkte pro Tag/Nacht.	KuDtrxGTumpQxX8OoXckho1lMh7BeP	u_2815959624	10	80	0	0	0	2020-12-03 09:05:53.140373	f
+STaTkPBLVXcELiIK5coBCd9oiPbaPi	Für jedes Bier (oder etwa äquivalente Menge Alkohol) gibt es 50 Punkte Abzug. Ein Bier pro Woche ist aber frei.	AdpTlzNqsncSFsxpnKwjXSwLZzMhHj	u_2815959624	-50	0	0	0	1	2020-12-03 09:05:53.141295	f
+ZOAHz5IRIGvDJpmETzSaLI52f9USMI	Alle Yoga Formen sind OK.	Xa6IKCmdxTAnoaLlzyiTVJ84iPRYDL	u_2815959624	3	0	0	0	0	2020-12-03 09:05:53.142279	f
+3Qe9vVJnip1xCmLP7DbgO95cnwwbRw	Duolingo points	IbGhdbRN5Oezwg9PaAa8PzmDPT3PkD	u_297968086	0.3	0	0	0	0	2020-12-03 11:43:03.709115	f
+\.
+
+
+--
+-- Data for Name: workouts; Type: TABLE DATA; Schema: public; Owner: kantn
+--
+
+COPY public.workouts (id, user_id, date, note, latest_edit) FROM stdin;
+fM7tNZfOuGWoUnauBUiiJyxUeoqtb8	u_9328162823	2020-09-21 14:00:00	Test	2020-11-16 14:28:33.514198
+JZIfNlEs5Xb3lQyGNkjyn3TajfmWka	u_9328162823	2020-09-20 14:00:00	Test2	2020-11-16 14:28:33.514204
+ZJJSAxPRyBzd6TCjxqUft4xO2btcJS	u_297968086	2020-11-25 15:30:00		2020-11-29 09:58:54.957563
+9FJp2TKP7EaPOmh4cq2Ds3a2tw0DPF	u_297968086	2020-11-26 18:30:00		2020-11-29 09:58:54.95846
+yi9EmbYW6bkI0gU6f4GXiOeoTwjL1g	u_297968086	2020-11-23 08:25:00		2020-11-29 09:58:54.959251
+ik5qd0GlG6ggrAW3pNgB2yZGeLG7Hi	u_297968086	2020-11-24 07:29:00		2020-11-29 09:58:54.959494
+tw5RMxUzfRGQh7958GnVnzAboyhpbP	u_297968086	2020-11-27 09:33:00		2020-11-29 09:58:54.959714
+2JzT6OzXvaea2wcTCby2ihOZLkyt2n	u_297968086	2020-11-28 11:34:00		2020-11-29 09:58:54.960072
+8czHJ1ADMH6oOVKSWtjqitIJPgzZGf	u_297968086	2020-11-29 10:23:34.532588		2020-11-29 14:11:28.644095
+L9sRIwD68Rhq2YMpJbpwteG9SJEmIm	u_297968086	2020-11-29 11:32:08.83513		2020-11-29 19:52:31.891788
+iNOdGiagsMJ3AyBN4fT8VU2qW0PWPT	u_297968086	2020-11-30 10:14:02.506062		2020-12-01 21:07:09.030421
+7sZxK5Uwz48KXjhOwmTxY7fHn8fLAm	u_2422614162	2020-12-02 14:09:57.349236		2020-12-02 14:09:57.349243
+OXQRtJdVGW92IdETNNYGUVxMiRgS5x	u_4985954568	2020-12-04 00:06:20.056049		2020-12-04 00:06:20.056051
+4bkzPVOfG6KilngBmdW1BNWb21BGaA	u_4985954568	2020-12-04 00:06:37.21206		2020-12-04 00:06:37.212065
+0314y4NS1MhU0PhI5X9S33WVUtSF2V	u_1711712509	2020-12-04 09:05:48.796011		2020-12-04 09:05:48.796013
+r2oPqHu1QPrrAp1jI9qrsX5mBP9Hre	u_1711712509	2020-12-04 09:05:00		2020-12-04 09:05:55.819201
+O5RDNXSoq9RYQAZ9d2dW1PNUmTZ9d9	u_2620483558	2020-12-04 09:06:45.073834		2020-12-04 09:06:45.073836
+B2NZxvGqK8Etmhnj92fC7WjhYql0ed	u_2620483558	2020-12-04 09:06:45.073834		2020-12-04 09:06:51.845277
+3lvTCAgG4JW9eOTnRMawzVLR50StJN	u_297968086	2020-12-04 12:15:05.023628		2020-12-04 12:15:15.993662
+Yesg5dYqkRactKuBh4RkF6bLTZUqWY	u_297968086	2020-12-04 12:01:21.838456		2020-12-04 20:31:16.693105
+zYqW2b4lsdQqpvGI9FjUIEhOQaMMZS	u_297968086	2020-12-04 20:30:45.852673		2020-12-04 20:31:32.393718
+DRsr4GwOJVMozr2Aoybrx5gfTUw1GP	u_3172059414	2020-12-04 21:07:29.186337		2020-12-04 21:07:29.186338
+jHYLl3U4nwFNHj9Q9sXkXpEFLpEHAl	u_297968086	2020-12-04 12:15:05.023628		2020-12-04 21:23:09.559694
+Rid6mcatCNxJLR10YW0qURRKTUQADZ	u_3172059414	2020-12-05 16:19:26.285266		2020-12-05 16:19:26.285267
+0gjH4piPNkUTl6dQeOjFieTpNE76rF	u_3172059414	2020-12-05 16:19:26.285266		2020-12-05 16:19:44.755051
+pkCJbgsevQuANE264NQT5EJrxTGWhE	u_3172059414	2020-12-05 16:19:52.871663		2020-12-05 16:19:52.871664
+ViAMM0s5MLqBXH5cIsWniD7yEhNFnV	u_3172059414	2020-12-05 16:19:52.871663		2020-12-05 16:20:12.678242
+5bt0MESjJgH7iWP69uWayxpIsy8yW3	u_297968086	2020-12-01 16:55:00		2020-12-05 16:55:48.157009
+5jDUtR8VM30qjoCQQw41LjspWsLlJC	u_297968086	2020-12-02 16:52:00		2020-12-05 16:56:18.489329
+b8TholRHCtUP3kOzdTQUMPw8hZCIva	u_297968086	2020-12-03 17:42:00		2020-12-05 16:56:43.069856
+k31PHKADKMFDkFMpuNiWL3QfngPMaM	u_297968086	2020-12-05 16:50:35.780034		2020-12-05 21:21:48.617471
+Ss2ZMSaDH9j6arUoAjnEBiaS9eBqBf	u_3172059414	2020-12-06 11:51:29.338566		2020-12-06 11:52:45.674428
+X93m1iZKZ765hLMjDXoEkhOiF3hOL5	u_3172059414	2020-12-05 16:20:35.067621		2020-12-06 11:53:38.005529
+GQvTlSncCy6FMOh38IdXo5jN65v0wE	u_3172059414	2020-12-05 11:50:00		2020-12-06 11:50:12.012235
+VElTaRqJqllsDRvss1cNDJZFLL7tNL	u_3172059414	2020-12-08 22:37:34.760866		2020-12-08 22:37:45.227909
+fvCzwg1pxyaMETOad4eZKCrZIigxOX	u_3172059414	2020-12-06 12:19:43.072594		2020-12-06 12:19:49.498932
+wxc7XcRp2sAVb6jk6a9zFvZzExSR7f	u_3172059414	2020-12-06 12:19:52.887729		2020-12-06 12:20:02.488535
+SIf6Je1wfCBxuOM4AAN98ADx0DeFJP	u_3172059414	2020-12-06 12:24:44.187593		2020-12-06 12:24:44.187595
+f04NYLeqiB3HO8b2kIb1fF7vbu6vll	u_3172059414	2020-12-12 18:06:10.464613		2020-12-12 18:06:22.957195
+GBRnDjz6dDH2KNvayiUhAEUf0JFlt3	u_297968086	2020-12-12 09:41:42.687758		2020-12-12 23:32:31.934766
+pnns6xN0D55uDld2GLisE8PWNpDNT4	u_3172059414	2020-12-16 09:58:30.997344		2020-12-16 09:58:38.503428
+R2Dkb4957YucXHx71K6Ep84jx5cMbc	u_297968086	2020-12-06 10:14:26.169401		2020-12-06 17:39:41.339618
+0RYpz7SDf6Ma5rAoH3uU1uCnjuis2B	u_4429059737	2020-12-06 19:39:24.488957		2020-12-06 19:39:24.488957
+1D6cPsiKPzmPNBcR7R1miMC2FMo3SW	u_4429059737	2020-12-06 19:40:37.730432		2020-12-06 19:40:47.6119
+xlU6s4eiiSSKkviwMmJRvfO7JBVvY0	u_3172059414	2020-12-06 19:59:54.400546		2020-12-06 20:00:04.346674
+A77dMoP1IvsNOoguDK3avq5JBV0Jq9	u_297968086	2020-12-07 08:37:26.348043		2020-12-07 08:37:34.475087
+fbbc69xt9PWQZj0TwCSjKEbluhzMKG	u_297968086	2020-12-09 08:14:36.999041		2020-12-09 22:17:13.634779
+DslKohdGYz3UCce2wrFlADJpVjSNeD	u_297968086	2020-12-13 09:10:15.789776		2020-12-14 10:41:33.51363
+2OJQAf95FC5W7wqQwRyvVnrIZ03j9W	u_297968086	2020-12-14 10:41:23.456702		2020-12-14 10:42:20.575273
+3gx5ZUm7EGcuPqY538MnGUwL7wxrCB	u_297968086	2020-12-07 11:49:04.240044		2020-12-07 22:31:00.841193
+0N8mDd6gQlY6JOKm7rEaEk2UXcyAMP	u_297968086	2020-12-15 08:36:43.21241		2020-12-15 08:36:48.347525
+LGnomQRUbcW61ya8PGPP861Ce3Uaiu	u_297968086	2020-12-10 09:57:11.081565		2020-12-10 19:18:46.473918
+NqqamarwH7s6WfQdE7KKhib17evowj	u_297968086	2020-12-08 08:54:04.619745		2020-12-08 19:45:55.778077
+8xM6LrcyFeWb1Sq7hZ4WtV1Dc3o0aS	u_3172059414	2020-12-15 20:16:11.931876		2020-12-15 20:16:21.638534
+HqD33PbrNeOBpoqRm9cUMC7HTUlLcN	u_3172059414	2020-12-14 20:17:00		2020-12-15 20:17:28.363367
+Zayv5cjx7OacK6VlMzfWqsXihmgVc9	u_3172059414	2020-12-15 20:17:52.007755		2020-12-15 20:17:52.007756
+TFr9bFHuRAgUYWRUK5oAmyu9cz8L5m	u_297968086	2020-12-11 07:22:06.45639		2020-12-12 00:25:38.999358
+AhBeFZAIoeu9FhQG6PhubynqWTQ6ox	u_3172059414	2020-12-15 20:17:53.307588		2020-12-15 20:17:53.30759
+QApklRmjxQ9Kb0fMumq4mubh8I86q1	u_3172059414	2020-12-12 18:05:46.879666		2020-12-12 18:05:58.691867
+eNnjXjaHfdLOyxZzlTQ2fNFtiM4xl4	u_3172059414	2020-12-14 20:15:00		2020-12-15 20:16:04.550982
+B1sekrEQNdQ2S85O5S6GfjtX0LLhu5	u_297968086	2020-12-15 19:41:43.600982		2020-12-15 19:43:04.872117
+1Z5BnQTE7uJrtWfULFrpagLJG7DCfz	u_3172059414	2020-12-15 20:10:01.402707		2020-12-15 20:10:10.759769
+LWY1YyUPFGMG1mQt0QTxtaWUoDGP6G	u_3172059414	2020-12-15 20:10:13.511084		2020-12-15 20:10:24.124961
+Qv1Ha0snunSu1H9CLvsU37sxZ89xPf	u_3172059414	2020-12-15 20:18:31.659902		2020-12-15 20:18:55.958835
+UQEeBvxCzQLks91Tp1VBrEgYh0H8rd	u_3172059414	2020-12-14 20:18:00		2020-12-15 20:18:32.679381
+Mv8cKVfbnK4FPDGH75jBbJEyWnefFX	u_297968086	2020-12-16 07:34:40.713504		2020-12-16 07:34:49.476155
+pkm1QV1HLv98d5bhSgDi7sF3E8E5YE	u_3172059414	2020-12-16 15:42:13.978127		2020-12-16 15:42:24.975819
+7Xipw0z0tvlBHdeIZWn78Yk59j2Qb8	u_3172059414	2020-12-16 23:53:24.834673		2020-12-16 23:53:32.836429
+8RZrwdJtjanfNnPa6muIoP7pVqtyuB	u_297968086	2020-12-16 18:32:25.532196		2020-12-16 18:33:12.95887
+HEVTuXIOj9I264DEL20Zla7L9PJrrR	u_3172059414	2020-12-16 23:53:26.180174		2020-12-16 23:53:44.824263
+TeTlI5yEhxUpiph10I31D8VcERv9Z7	u_3172059414	2020-12-17 14:18:07.637878		2020-12-17 14:18:14.339134
+4FGlVd8pRSAmHXZKoSl9u7i6f4Qo5x	u_3172059414	2020-12-17 14:18:16.788398		2020-12-17 14:18:28.222789
+2tsKOvSCvti9DI3WSXXMIB6fAE3c4R	u_3172059414	2020-12-17 20:59:49.791623		2020-12-17 21:00:00.654525
+tRG1ByiQYlns5FWiVw38iIGuz3zLUv	u_297968086	2020-12-17 22:32:49.485716		2020-12-17 22:33:05.449412
+RZIfRJyS6UKC1VlGCoCnqUEloZ1QGz	u_297968086	2020-12-18 08:28:38.812829		2020-12-18 08:29:23.40459
+qUKRSbV2hjxeNfptDPYaWQQozEc95q	u_297968086	2020-12-19 14:28:00		2020-12-20 19:38:06.513447
+vmOuUpOD2MLxCb9CccXtkhipcyTuOm	u_297968086	2020-12-20 19:29:55.052809		2020-12-20 20:29:34.293001
+cOHen4hcJSzuQsoH5Pjm04x5aB0F8O	u_3172059414	2020-12-20 20:02:58.65202		2020-12-20 20:03:11.51283
+lWGhI4ti8q8eJyGBgVKCK0wrrTyWak	u_3172059414	2020-12-20 20:03:16.511798		2020-12-20 20:03:25.689127
+YIgosFXdSTu123zVcQ4zdWnIvQpLLY	u_3172059414	2020-12-20 20:03:29.108433		2020-12-20 20:03:35.703975
+Fjh4HmQpa5lDh4wWCAsbmk17vb414d	u_3172059414	2020-12-20 20:03:48.077416		2020-12-20 20:04:03.863191
+fsyL8kMOHXQ9NmfM6yaVX6plbtiPw7	u_3172059414	2020-12-20 20:04:12.71936		2020-12-20 20:04:34.6243
+EjQG5b8Cb0K0eI2CYChdrxONcj09S3	u_3172059414	2020-12-19 20:04:00		2020-12-20 20:05:25.834737
+PT34zPw8r6S2NiCwum31H99FFqaLsR	u_3172059414	2020-12-18 20:05:00		2020-12-20 20:05:56.623946
+Sq66QqxLK9mtnHHsM0B5U8uHEJYtHH	u_3172059414	2020-12-20 20:06:32.455871		2020-12-20 20:06:45.676744
+cIEvpUpdqySeCQMHqtWrKSe9rFTzdv	u_3172059414	2020-12-20 20:07:08.164223		2020-12-20 20:07:14.31943
+\.
+
+
+--
+-- Data for Name: actions; Type: TABLE DATA; Schema: public; Owner: kantn
+--
+
+COPY public.actions (id, exercise_id, workout_id, number, note) FROM stdin;
+WLPjXzb8JUVofC57aDso	EEUnxv6rUfTMBnDg4pUv20leytTe8m	fvCzwg1pxyaMETOad4eZKCrZIigxOX	900	
+AV8w0Q0o1uSfhmsaUy3Q	tSIqZY5iW628qOJjL8Q6wmcNEKRP8H	wxc7XcRp2sAVb6jk6a9zFvZzExSR7f	10	
+VatJlltVqVzDr4NEgXz7	KuDtrxGTumpQxX8OoXckho1lMh7BeP	qUKRSbV2hjxeNfptDPYaWQQozEc95q	8.25	
+93MqFXqSgXcXIRY0gGTv	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	qUKRSbV2hjxeNfptDPYaWQQozEc95q	40	
+Vvhjwbbsf4xqW9LCUEDW	tSIqZY5iW628qOJjL8Q6wmcNEKRP8H	qUKRSbV2hjxeNfptDPYaWQQozEc95q	10	
+VX3g5i9N8Zmzfsb9FO6m	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	qUKRSbV2hjxeNfptDPYaWQQozEc95q	9500	
+F2EV2WXdYg8rlm5rjTrJ	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	cOHen4hcJSzuQsoH5Pjm04x5aB0F8O	131	
+VPCbaTfx6Iuqx29xeScJ	EEUnxv6rUfTMBnDg4pUv20leytTe8m	lWGhI4ti8q8eJyGBgVKCK0wrrTyWak	200	
+9z7NsbWnnePCkAcqZTe1	KuDtrxGTumpQxX8OoXckho1lMh7BeP	YIgosFXdSTu123zVcQ4zdWnIvQpLLY	9	
+9ReYvbv8KgH1IMl4QdAK	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	Fjh4HmQpa5lDh4wWCAsbmk17vb414d	19000	
+mDMee9bSaCsvh5hrY1bN	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	fsyL8kMOHXQ9NmfM6yaVX6plbtiPw7	3000	
+JO2HujGjPzNkt5E7AjdI	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	fsyL8kMOHXQ9NmfM6yaVX6plbtiPw7	3000	
+ZEGKzPjCP5fnTnwAH796	KuDtrxGTumpQxX8OoXckho1lMh7BeP	EjQG5b8Cb0K0eI2CYChdrxONcj09S3	8	
+wNYfV73UCRP7jLPlXQpv	KuDtrxGTumpQxX8OoXckho1lMh7BeP	PT34zPw8r6S2NiCwum31H99FFqaLsR	8	
+ID28oRnFcO31AsbQE4UR	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	Sq66QqxLK9mtnHHsM0B5U8uHEJYtHH	7339	
+lrar4mxuimeRVQosYnkH	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	cIEvpUpdqySeCQMHqtWrKSe9rFTzdv	15000	
+fgC3MkaSH4buxG5KOCIN	KuDtrxGTumpQxX8OoXckho1lMh7BeP	vmOuUpOD2MLxCb9CccXtkhipcyTuOm	8	
+pjLIbZERrf7OSSxtADrD	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	vmOuUpOD2MLxCb9CccXtkhipcyTuOm	17500	
+CyoyTG8Pw3VABD7hIV6q	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	vmOuUpOD2MLxCb9CccXtkhipcyTuOm	60	
+qyTpoZMHPlbM2K4Htmmw	aoHxlafVvY5bQ20H4B0jyT0uicZqA9	vmOuUpOD2MLxCb9CccXtkhipcyTuOm	2	
+cd2AuPAQJNqHSkmQumTs	Xa6IKCmdxTAnoaLlzyiTVJ84iPRYDL	vmOuUpOD2MLxCb9CccXtkhipcyTuOm	20	
+L2MDLpFcJWQtvC9tR8hM	1ff8680KcJHiBsQnsGDLeTBHpn36RY	vmOuUpOD2MLxCb9CccXtkhipcyTuOm	4	
+splb6rNRCrKIxNUIZKnt	KuDtrxGTumpQxX8OoXckho1lMh7BeP	R2Dkb4957YucXHx71K6Ep84jx5cMbc	8	
+S2XMCAKZUGJkoIqB6qrO	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	R2Dkb4957YucXHx71K6Ep84jx5cMbc	30	
+biozs0La6G0EhlhTfJi4	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	R2Dkb4957YucXHx71K6Ep84jx5cMbc	30	
+jqIDqLjwATUhjFELWs0n	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	R2Dkb4957YucXHx71K6Ep84jx5cMbc	30	
+Irq9tA32EMfmDntyJapE	tSIqZY5iW628qOJjL8Q6wmcNEKRP8H	R2Dkb4957YucXHx71K6Ep84jx5cMbc	10	
+HZVGBkHXqZ3grc4nzJMJ	L14PhR4kXbeEdyAxYMEvELKfTEvO3M	R2Dkb4957YucXHx71K6Ep84jx5cMbc	1	
+zk2WAECADAwry6qxmV7c	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	R2Dkb4957YucXHx71K6Ep84jx5cMbc	10000	
+vlNqPjOC4iuigBpOvozU	EEUnxv6rUfTMBnDg4pUv20leytTe8m	R2Dkb4957YucXHx71K6Ep84jx5cMbc	320	
+i5pn1UhwbzE7luBin2e2	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	R2Dkb4957YucXHx71K6Ep84jx5cMbc	20	
+mTx14xY56QELEjLSTMmA	Xa6IKCmdxTAnoaLlzyiTVJ84iPRYDL	1D6cPsiKPzmPNBcR7R1miMC2FMo3SW	60	
+5bE52nnAn4FgtfgJJGfG	Xa6IKCmdxTAnoaLlzyiTVJ84iPRYDL	xlU6s4eiiSSKkviwMmJRvfO7JBVvY0	15	
+ib9fNLw3lXF7YXhS6Xfp	KuDtrxGTumpQxX8OoXckho1lMh7BeP	A77dMoP1IvsNOoguDK3avq5JBV0Jq9	7.25	
+XGNR5FlVzDs9QidDYf3R	KuDtrxGTumpQxX8OoXckho1lMh7BeP	fbbc69xt9PWQZj0TwCSjKEbluhzMKG	7.5	
+n6ffOah6qwNxwNDdqnQ4	Xa6IKCmdxTAnoaLlzyiTVJ84iPRYDL	fbbc69xt9PWQZj0TwCSjKEbluhzMKG	10	
+saaRqfRgbFbWbaONJzV4	L14PhR4kXbeEdyAxYMEvELKfTEvO3M	fbbc69xt9PWQZj0TwCSjKEbluhzMKG	1	
+xZbhgVtv0StqeA6et3aF	tSIqZY5iW628qOJjL8Q6wmcNEKRP8H	fbbc69xt9PWQZj0TwCSjKEbluhzMKG	18	
+e63Nzs7UL2Z6Z4v45gGR	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	fbbc69xt9PWQZj0TwCSjKEbluhzMKG	30	
+h6jMX7F4m7cdxnB9ebWf	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	fbbc69xt9PWQZj0TwCSjKEbluhzMKG	10134	
+T4zgMQcd4YaXLusYdUIr	1ff8680KcJHiBsQnsGDLeTBHpn36RY	3gx5ZUm7EGcuPqY538MnGUwL7wxrCB	4	
+r701BbK2LZ9rnAwmniEO	Xa6IKCmdxTAnoaLlzyiTVJ84iPRYDL	3gx5ZUm7EGcuPqY538MnGUwL7wxrCB	10	
+QxRF3yOU2F2bvxNv3kGR	tSIqZY5iW628qOJjL8Q6wmcNEKRP8H	3gx5ZUm7EGcuPqY538MnGUwL7wxrCB	20	
+B54tXywkhkH5tY6Biwlh	aoHxlafVvY5bQ20H4B0jyT0uicZqA9	3gx5ZUm7EGcuPqY538MnGUwL7wxrCB	2	
+t0jiPiaFVCtiYytaOgb4	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	3gx5ZUm7EGcuPqY538MnGUwL7wxrCB	70	
+M3lzwE5JbZ65GF1kuhsU	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	3gx5ZUm7EGcuPqY538MnGUwL7wxrCB	30	
+RkefEab5SerAqSHQo8ul	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	3gx5ZUm7EGcuPqY538MnGUwL7wxrCB	4000	
+reBHymvpmErpFrnZopPj	KuDtrxGTumpQxX8OoXckho1lMh7BeP	LGnomQRUbcW61ya8PGPP861Ce3Uaiu	8.3	
+p9HO2QktkyKF8PiBKGTL	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	LGnomQRUbcW61ya8PGPP861Ce3Uaiu	30	
+iSvtJHgWRv8HS0zV1THf	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	LGnomQRUbcW61ya8PGPP861Ce3Uaiu	30	
+kaBkFxRtFF3VbKLY73ty	L14PhR4kXbeEdyAxYMEvELKfTEvO3M	LGnomQRUbcW61ya8PGPP861Ce3Uaiu	1.5	
+wfoxnU7CgHKpHlifJ8cD	1ff8680KcJHiBsQnsGDLeTBHpn36RY	LGnomQRUbcW61ya8PGPP861Ce3Uaiu	6	
+kquJYQEDE4mLtdeCkSia	Xa6IKCmdxTAnoaLlzyiTVJ84iPRYDL	LGnomQRUbcW61ya8PGPP861Ce3Uaiu	15	
+WeTeF6XQXpgDXOK7vljL	aoHxlafVvY5bQ20H4B0jyT0uicZqA9	LGnomQRUbcW61ya8PGPP861Ce3Uaiu	3	
+ga5D1LY22o5XC1WU8ss1	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	LGnomQRUbcW61ya8PGPP861Ce3Uaiu	90	
+QY9XOW2uhtcBaXQm9DLy	KuDtrxGTumpQxX8OoXckho1lMh7BeP	TFr9bFHuRAgUYWRUK5oAmyu9cz8L5m	7	
+5jwRQnkrkXxQZa5KW3QB	Xa6IKCmdxTAnoaLlzyiTVJ84iPRYDL	TFr9bFHuRAgUYWRUK5oAmyu9cz8L5m	10	
+7P3lqYxOF8EVoallBJ4R	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	TFr9bFHuRAgUYWRUK5oAmyu9cz8L5m	30	
+5SuFprKiwo4K9lM246hP	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	TFr9bFHuRAgUYWRUK5oAmyu9cz8L5m	27600	
+EB59JoN9vyFypk0Aygk9	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	TFr9bFHuRAgUYWRUK5oAmyu9cz8L5m	20	
+G76fITcmNYpt986yorLn	KuDtrxGTumpQxX8OoXckho1lMh7BeP	NqqamarwH7s6WfQdE7KKhib17evowj	8	
+volvVQ4QGteaoroRoRWT	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	NqqamarwH7s6WfQdE7KKhib17evowj	30	
+bi0HV9bUoD709LKI8p7m	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	NqqamarwH7s6WfQdE7KKhib17evowj	30	
+XQxrEZALfn8G0ziIrl4r	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	NqqamarwH7s6WfQdE7KKhib17evowj	20	
+CroDMhu8lqVjGbIJSsUh	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	NqqamarwH7s6WfQdE7KKhib17evowj	30	
+8N7tsNCIi55rYq1ttaSp	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	NqqamarwH7s6WfQdE7KKhib17evowj	13200	
+Rsa5zfzK8oIRC6pNusW9	aoHxlafVvY5bQ20H4B0jyT0uicZqA9	VElTaRqJqllsDRvss1cNDJZFLL7tNL	60	
+otM2ZoPNvkm79a46wcbg	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	QApklRmjxQ9Kb0fMumq4mubh8I86q1	9200	
+nDPUFDgEIg7C4obyRJQ9	KuDtrxGTumpQxX8OoXckho1lMh7BeP	f04NYLeqiB3HO8b2kIb1fF7vbu6vll	8	
+kUk9drrsZrordsaaN9OA	KuDtrxGTumpQxX8OoXckho1lMh7BeP	GBRnDjz6dDH2KNvayiUhAEUf0JFlt3	7.5	
+7jELrCWzxkncHctk2e5f	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	GBRnDjz6dDH2KNvayiUhAEUf0JFlt3	5000	
+GOh9ROaS8NRyEcTBzCZb	KuDtrxGTumpQxX8OoXckho1lMh7BeP	DslKohdGYz3UCce2wrFlADJpVjSNeD	8.5	
+X00p6khHPlpTLFTNtjbh	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	DslKohdGYz3UCce2wrFlADJpVjSNeD	30000	
+nntLERWb2kYMqPtf7Kl3	KuDtrxGTumpQxX8OoXckho1lMh7BeP	2OJQAf95FC5W7wqQwRyvVnrIZ03j9W	8	
+9hFax1W4XjgcffYL9cak	KuDtrxGTumpQxX8OoXckho1lMh7BeP	0N8mDd6gQlY6JOKm7rEaEk2UXcyAMP	7	
+qR0sB6SGnajdVuPAhZZtnWUJFkzqw1	1ff8680KcJHiBsQnsGDLeTBHpn36RY	\N	10	
+wd6lVSq5fskT2UcID5lHmRMwuwl7EF	tSIqZY5iW628qOJjL8Q6wmcNEKRP8H	\N	10	
+P2rsZ3L39QbgjXbCrH3c	KuDtrxGTumpQxX8OoXckho1lMh7BeP	Ss2ZMSaDH9j6arUoAjnEBiaS9eBqBf	9	
+cPhHCSHHfqIVDoLfqMwx	AdpTlzNqsncSFsxpnKwjXSwLZzMhHj	X93m1iZKZ765hLMjDXoEkhOiF3hOL5	4	
+4WizexJAZ0rVRXUcUoeZOfJCBG1COC	1ff8680KcJHiBsQnsGDLeTBHpn36RY	\N	10	
+J2bznwweW1RQYozTHToGTwY8SW5loP	tSIqZY5iW628qOJjL8Q6wmcNEKRP8H	\N	10	
+jnkLGmDImgwk8eh1DRnuwNd9RROEXK	Xa6IKCmdxTAnoaLlzyiTVJ84iPRYDL	k31PHKADKMFDkFMpuNiWL3QfngPMaM	20	
+JNAEq8sRaUFPVGInircwVeWoaZE69U	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	k31PHKADKMFDkFMpuNiWL3QfngPMaM	34000	
+IGLoQLOfJsCX1DRbfMj7WqoClCLGOJ	KuDtrxGTumpQxX8OoXckho1lMh7BeP	k31PHKADKMFDkFMpuNiWL3QfngPMaM	6.5	
+griAsNu1sto8bgQtArcNJnWJRknrKX	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	k31PHKADKMFDkFMpuNiWL3QfngPMaM	30	
+E45cUim6hRpSMo8j9ARM	L14PhR4kXbeEdyAxYMEvELKfTEvO3M	k31PHKADKMFDkFMpuNiWL3QfngPMaM	1	
+00u8CIjaWqmbZ1iloRBiBOSffjIO3M	L14PhR4kXbeEdyAxYMEvELKfTEvO3M	\N	1	
+DwOjJ8T9QMGVTQQuuIr8rlP2nlUimI	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	\N	30	
+JjPoJaV9M1GrMIdJn7BcRfGTwgQ7tG	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	\N	34000	
+jGaL9GjQpZAU1Ei2w1Gc7IgINoivO5	KuDtrxGTumpQxX8OoXckho1lMh7BeP	\N	6.5	
+q0Mp8vHz37G3G5nydSw2vmf7TYXy0j	Xa6IKCmdxTAnoaLlzyiTVJ84iPRYDL	\N	20	
+FS6dqMBHF90Q6OtnYrcY764eVU2uqp	aoHxlafVvY5bQ20H4B0jyT0uicZqA9	r2oPqHu1QPrrAp1jI9qrsX5mBP9Hre	2	
+UhjxOr6orYx25SM5vr3zOiEnMdUMmv	tSIqZY5iW628qOJjL8Q6wmcNEKRP8H	B2NZxvGqK8Etmhnj92fC7WjhYql0ed	10	
+3MaikZvmgXYCu2oom1qmmCI1DXTHTO	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	3lvTCAgG4JW9eOTnRMawzVLR50StJN	30	
+Bnfmk1I0r5TcnBchtt5fJGD5LNfy1L	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	\N	30	
+zWYi6TWCP7qqNK2CXQ4J1hn5qdUSbs	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	\N	30	
+XLI8fYAmnfv9nTaD9MmT	KuDtrxGTumpQxX8OoXckho1lMh7BeP	b8TholRHCtUP3kOzdTQUMPw8hZCIva	7.8	
+DalmsTlMDfRwEp7iT4AjFAm0lj85Ck	L14PhR4kXbeEdyAxYMEvELKfTEvO3M	\N	1	
+h2t8xPzPa7CutPYKQP1Q57gmJqP35x	Xa6IKCmdxTAnoaLlzyiTVJ84iPRYDL	\N	20	
+sG73gYDL6AZGqMjelOu2ad7dXdbaCV	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	\N	34000	
+VG3HtwW15Qu0dnjTY0mqPyHOjoKHfK	1ff8680KcJHiBsQnsGDLeTBHpn36RY	\N	10	
+xBF6SRehTt0irM6YS2fARExZ6tBG4a	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	\N	15	
+QFg4ZlWvHunC6g4AnhqZQahuJTibao	EEUnxv6rUfTMBnDg4pUv20leytTe8m	\N	20	
+zizAPD7KhrbmMwzkmAI7lSgMsrhbnK	1ff8680KcJHiBsQnsGDLeTBHpn36RY	\N	10	
+mztB0NfMoMZcBNK2xIpwrjO95bcIHv	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	Yesg5dYqkRactKuBh4RkF6bLTZUqWY	30	
+7UvimxSUkMkTBoYIIEnSAAoT3dtSHD	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	Yesg5dYqkRactKuBh4RkF6bLTZUqWY	30	
+MHzdEFvj6HClrcAstkYpK3n20ZgzFN	1ff8680KcJHiBsQnsGDLeTBHpn36RY	fM7tNZfOuGWoUnauBUiiJyxUeoqtb8	7.5	
+cO2kXxqm8K3oGzvgpN788cnmiFg796	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	fM7tNZfOuGWoUnauBUiiJyxUeoqtb8	26000	
+DkXI3XVcUjbXIvSk4UTr	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	iNOdGiagsMJ3AyBN4fT8VU2qW0PWPT	20	
+oL12LGHPZ1udf33amZEo	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	iNOdGiagsMJ3AyBN4fT8VU2qW0PWPT	20	
+lL26Ft9I9D33b2Ua0cvV	KuDtrxGTumpQxX8OoXckho1lMh7BeP	iNOdGiagsMJ3AyBN4fT8VU2qW0PWPT	7	
+atwavfFdv3vwbFeGN9LF	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	iNOdGiagsMJ3AyBN4fT8VU2qW0PWPT	20	
+hpo6sCpANPlQUxDrro2I	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	iNOdGiagsMJ3AyBN4fT8VU2qW0PWPT	20	
+R4ck3twIlCSxbk9RemOE	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	iNOdGiagsMJ3AyBN4fT8VU2qW0PWPT	20	
+7bmh51KzgXfpvrc0oTqj	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	iNOdGiagsMJ3AyBN4fT8VU2qW0PWPT	20	
+u9mIpTu5d69PRhsqh9nZExwOoudbhf	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	ZJJSAxPRyBzd6TCjxqUft4xO2btcJS	100	
+YW8LL5SRZlaAy5alhA6PdexSigFEGK	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	9FJp2TKP7EaPOmh4cq2Ds3a2tw0DPF	60	
+KvE1hGF05dQTZpeLQsPj5bHsE45W24	KuDtrxGTumpQxX8OoXckho1lMh7BeP	9FJp2TKP7EaPOmh4cq2Ds3a2tw0DPF	6.5	
+wksWmVf9TpoWaNIhA8cx	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	yi9EmbYW6bkI0gU6f4GXiOeoTwjL1g	465	
+g9WbCYKzqaYpOUOCOFlc	KuDtrxGTumpQxX8OoXckho1lMh7BeP	yi9EmbYW6bkI0gU6f4GXiOeoTwjL1g	6.1	
+l8VTzMkYZg7RBj3jkiOH	KuDtrxGTumpQxX8OoXckho1lMh7BeP	ik5qd0GlG6ggrAW3pNgB2yZGeLG7Hi	7.5	
+GtiEpEF1taEq7YFK2vyO	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	ik5qd0GlG6ggrAW3pNgB2yZGeLG7Hi	10352	
+H1xMqeXAPPTvzJd8opUO	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	tw5RMxUzfRGQh7958GnVnzAboyhpbP	34962	
+IwfgaOtz8YmUzXAKd4zp	KuDtrxGTumpQxX8OoXckho1lMh7BeP	tw5RMxUzfRGQh7958GnVnzAboyhpbP	6.5	
+oLjwCwkeDLd93bUSOPLH	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	2JzT6OzXvaea2wcTCby2ihOZLkyt2n	16472	
+wqiGIgJNTnliNMkXEbTo	KuDtrxGTumpQxX8OoXckho1lMh7BeP	2JzT6OzXvaea2wcTCby2ihOZLkyt2n	6.5	
+p9PFUQafMw1wqG6s3OMR	tSIqZY5iW628qOJjL8Q6wmcNEKRP8H	2JzT6OzXvaea2wcTCby2ihOZLkyt2n	20	
+pi0dHJV0ZSWNQpXLDdw6	EEUnxv6rUfTMBnDg4pUv20leytTe8m	2JzT6OzXvaea2wcTCby2ihOZLkyt2n	190	
+q50pMNvGjW1BFjF2uRlp	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	2JzT6OzXvaea2wcTCby2ihOZLkyt2n	35	
+b6mLS5LalHMEuNvPxxoM	1ff8680KcJHiBsQnsGDLeTBHpn36RY	2JzT6OzXvaea2wcTCby2ihOZLkyt2n	4	
+dMNdWwaIAf8KMWWCfIWu	KuDtrxGTumpQxX8OoXckho1lMh7BeP	8czHJ1ADMH6oOVKSWtjqitIJPgzZGf	7.5	
+68dpsbQPlAt65pX1mpjW	tSIqZY5iW628qOJjL8Q6wmcNEKRP8H	8czHJ1ADMH6oOVKSWtjqitIJPgzZGf	15	
+IVQIr3HYl8NCqOw35eYw	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	8czHJ1ADMH6oOVKSWtjqitIJPgzZGf	40	
+2Eb1k2FR0iahLTM2H65p	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	L9sRIwD68Rhq2YMpJbpwteG9SJEmIm	20	
+bNc3td2OBSaQFbq7gKtY	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	L9sRIwD68Rhq2YMpJbpwteG9SJEmIm	20	
+sPJZCVBmNOPCC3d2MLWn	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	L9sRIwD68Rhq2YMpJbpwteG9SJEmIm	20	
+YaR85kzYtQdJh9UYpqMEUbcSIhqjPp	1ff8680KcJHiBsQnsGDLeTBHpn36RY	\N	10	
+xOqEgP0JbSNYyv1UbsxJzhQ3STpel5	tSIqZY5iW628qOJjL8Q6wmcNEKRP8H	\N	10	
+5lQ5bAtpCO1kSf6ErLeoZb9eEJJBLG	tSIqZY5iW628qOJjL8Q6wmcNEKRP8H	\N	10	
+JstWlvxVPcxjJZROeRNFP80YQkRVXw	1ff8680KcJHiBsQnsGDLeTBHpn36RY	\N	10	
+4aQvp94CWCd3elCSyuoDb8jLvJz9Dv	1ff8680KcJHiBsQnsGDLeTBHpn36RY	\N	10	
+FzRf1hpZf6Wxrr1rtseoYKxxo45UYN	tSIqZY5iW628qOJjL8Q6wmcNEKRP8H	\N	10	
+IBw6J81o6TbDpRzAOWzE	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	Yesg5dYqkRactKuBh4RkF6bLTZUqWY	30	
+Xpb3VHmBCAMFZKIwDhkm	KuDtrxGTumpQxX8OoXckho1lMh7BeP	Yesg5dYqkRactKuBh4RkF6bLTZUqWY	5.5	
+Yl1zzP5GpOjPojSTK6ZPSkzdHepoEW	L14PhR4kXbeEdyAxYMEvELKfTEvO3M	zYqW2b4lsdQqpvGI9FjUIEhOQaMMZS	1	
+U6pPBNeSkwoTdV0zixWRIG0ylNLDlj	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	zYqW2b4lsdQqpvGI9FjUIEhOQaMMZS	15400	
+rGXujhDHQFYZ22RUbR3L	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	\N	100	
+vG9b9Q7HnfVUIxErb3OM2jZ9MYRzU9	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	jHYLl3U4nwFNHj9Q9sXkXpEFLpEHAl	30	
+SXcMoz4weB8trISYBHreYP0ltVZ3gd	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	jHYLl3U4nwFNHj9Q9sXkXpEFLpEHAl	30	
+pNgf47sUmr2oXjUAUnVA	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	jHYLl3U4nwFNHj9Q9sXkXpEFLpEHAl	15400	
+DuCFntgQmE7tMBXvKgnhrTZo7J9X0t	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	0gjH4piPNkUTl6dQeOjFieTpNE76rF	21000	
+mafnr4XMaaFETYMkTvGJGnmTWuuQIX	KuDtrxGTumpQxX8OoXckho1lMh7BeP	ViAMM0s5MLqBXH5cIsWniD7yEhNFnV	8	
+yRixmzCT4I4ckYHQlyqe	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	\N	12000	
+AbDoZM09M8NhBRy1IldlDaW7ufDwvp	KuDtrxGTumpQxX8OoXckho1lMh7BeP	5bt0MESjJgH7iWP69uWayxpIsy8yW3	7	
+cfWNTPMXNHRrB1Sv7NXfqPF1dm2U4F	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	5jDUtR8VM30qjoCQQw41LjspWsLlJC	12000	
+lYXNfndePjixZZMpkufzY1oKeGGX2X	KuDtrxGTumpQxX8OoXckho1lMh7BeP	5jDUtR8VM30qjoCQQw41LjspWsLlJC	4	
+UxoCrd6grNvblhNcymtKzZqceBHRUt	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	b8TholRHCtUP3kOzdTQUMPw8hZCIva	20	
+UUixwHL0ytjZPrFGfSK5	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	b8TholRHCtUP3kOzdTQUMPw8hZCIva	2400	
+1STykW9VCA7KGtq7o8QsYWN6rD6wHs	Xa6IKCmdxTAnoaLlzyiTVJ84iPRYDL	\N	20	
+MCbzRF9HiNrD0WDQ0z9mZeHa0aaodA	KuDtrxGTumpQxX8OoXckho1lMh7BeP	\N	6.5	
+x6IXmxG4sUa701Kx25hHu9tMQY8Ein	Xa6IKCmdxTAnoaLlzyiTVJ84iPRYDL	\N	20	
+xqCXiSlS59GiZPkUbpaNwzpLtxPTv0	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	\N	34000	
+z7TYMl57q2gse4Sjmg5KBChCOd8JHa	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	\N	12000	
+5cRttYdLkLU46dLoiSX1zztu9qTPqB	1ff8680KcJHiBsQnsGDLeTBHpn36RY	\N	10	
+oKcSNTqErkXoacJjWCB7ruaUiiACia	tSIqZY5iW628qOJjL8Q6wmcNEKRP8H	\N	10	
+H6DtlmDo3fl04uJ7k5s5LVtxN9UdMo	tSIqZY5iW628qOJjL8Q6wmcNEKRP8H	\N	10	
+tOGn2kHNFu7IUl2ByBg31Jgr2TYv4C	1ff8680KcJHiBsQnsGDLeTBHpn36RY	\N	10	
+R5mEW4xmeD3Hd1pLwqIJK4p2eVCbzN	tSIqZY5iW628qOJjL8Q6wmcNEKRP8H	\N	10	
+iDq6HIrH47DW4EhaeI9K7jpMXKuA2J	1ff8680KcJHiBsQnsGDLeTBHpn36RY	\N	10	
+xcTUVOMW4HU8ZDdwnPPwJUnx8mOd2N	AdpTlzNqsncSFsxpnKwjXSwLZzMhHj	\N	6	
+Dg8Ap1l2KLJmTS0gL9F0	1ff8680KcJHiBsQnsGDLeTBHpn36RY	B1sekrEQNdQ2S85O5S6GfjtX0LLhu5	6	
+DSO9nG89myJ7sle5wJJB	EEUnxv6rUfTMBnDg4pUv20leytTe8m	B1sekrEQNdQ2S85O5S6GfjtX0LLhu5	320	
+bzifzqoRC5ovXl25gWxJ	L14PhR4kXbeEdyAxYMEvELKfTEvO3M	B1sekrEQNdQ2S85O5S6GfjtX0LLhu5	2	
+7B1zPChj81tE266ulrNR	Xa6IKCmdxTAnoaLlzyiTVJ84iPRYDL	B1sekrEQNdQ2S85O5S6GfjtX0LLhu5	13	
+dhxbKJFgsDWlRCsKQ70L	aoHxlafVvY5bQ20H4B0jyT0uicZqA9	B1sekrEQNdQ2S85O5S6GfjtX0LLhu5	3	
+9sfo9ZyyvQpe6GdotOf3	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	B1sekrEQNdQ2S85O5S6GfjtX0LLhu5	90	
+lZttqUiPPMfuUvdHxzZY	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	B1sekrEQNdQ2S85O5S6GfjtX0LLhu5	7350	
+rwoE6KipGiRRu2UnFxhm	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	1Z5BnQTE7uJrtWfULFrpagLJG7DCfz	11000	
+7EjybLRmb9fKbnf2eG2s	KuDtrxGTumpQxX8OoXckho1lMh7BeP	LWY1YyUPFGMG1mQt0QTxtaWUoDGP6G	7	
+QXzpzwk53QExasWsRDrN	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	8xM6LrcyFeWb1Sq7hZ4WtV1Dc3o0aS	80	
+YFWayFQtZMipsDVgFmFJ	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	HqD33PbrNeOBpoqRm9cUMC7HTUlLcN	8430	
+E8EBsx6TKDfPUYN8V71K	EEUnxv6rUfTMBnDg4pUv20leytTe8m	eNnjXjaHfdLOyxZzlTQ2fNFtiM4xl4	160	
+ixUJbiMt96XrrSMdlOQD	KuDtrxGTumpQxX8OoXckho1lMh7BeP	Qv1Ha0snunSu1H9CLvsU37sxZ89xPf	4	
+QbwGg2Rf5QgsV0h6eD5E	KuDtrxGTumpQxX8OoXckho1lMh7BeP	Mv8cKVfbnK4FPDGH75jBbJEyWnefFX	7.5	
+Z9QPq5qUhEa52QklrYMj	KuDtrxGTumpQxX8OoXckho1lMh7BeP	pnns6xN0D55uDld2GLisE8PWNpDNT4	7	
+S3Gq1ttH8Dub7WJsG5Uj	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	pkm1QV1HLv98d5bhSgDi7sF3E8E5YE	50	
+Ufywmui0lFGRmr41ywsL	tSIqZY5iW628qOJjL8Q6wmcNEKRP8H	8RZrwdJtjanfNnPa6muIoP7pVqtyuB	20	
+XHnDbf0ACKVlALgfFpfZ	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	8RZrwdJtjanfNnPa6muIoP7pVqtyuB	13300	
+dlQQHarkcxl6ORCkZBLb	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	7Xipw0z0tvlBHdeIZWn78Yk59j2Qb8	8000	
+qiS3VLVSRmbr3dKT5Lgz	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	HEVTuXIOj9I264DEL20Zla7L9PJrrR	40	
+XzCw8HBn5t3xKYtxjr0e	Xa6IKCmdxTAnoaLlzyiTVJ84iPRYDL	TeTlI5yEhxUpiph10I31D8VcERv9Z7	2	
+RJ21tnNtKZYexFGUwzki	KuDtrxGTumpQxX8OoXckho1lMh7BeP	4FGlVd8pRSAmHXZKoSl9u7i6f4Qo5x	8	
+KlDEHLDOjXPW7SQITCqj	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	2tsKOvSCvti9DI3WSXXMIB6fAE3c4R	15000	
+EUdM3nffrISqmdfQHcrp	KuDtrxGTumpQxX8OoXckho1lMh7BeP	tRG1ByiQYlns5FWiVw38iIGuz3zLUv	7.5	
+r9Jr0eFLyoAYxyPdvHIb	rdy8RTOTmqosNW48tW0ZPzRx1jpVMD	tRG1ByiQYlns5FWiVw38iIGuz3zLUv	3000	
+uIr0hxNKCqXiYAaG0kDB	KuDtrxGTumpQxX8OoXckho1lMh7BeP	RZIfRJyS6UKC1VlGCoCnqUEloZ1QGz	6.5	
+Gv0mBXC1JfV1oiLMtT4k	EEUnxv6rUfTMBnDg4pUv20leytTe8m	RZIfRJyS6UKC1VlGCoCnqUEloZ1QGz	320	
+XOtuO4g253XeYHS6JmuK	L14PhR4kXbeEdyAxYMEvELKfTEvO3M	RZIfRJyS6UKC1VlGCoCnqUEloZ1QGz	1	
+O8QUC4U4kSHPqwRTyqUi	1ff8680KcJHiBsQnsGDLeTBHpn36RY	RZIfRJyS6UKC1VlGCoCnqUEloZ1QGz	4	
+gR6MNmiugzVFdDIkYJBN	Xa6IKCmdxTAnoaLlzyiTVJ84iPRYDL	RZIfRJyS6UKC1VlGCoCnqUEloZ1QGz	15	
+ZG52tzDC8StaN9espSMd	tSIqZY5iW628qOJjL8Q6wmcNEKRP8H	RZIfRJyS6UKC1VlGCoCnqUEloZ1QGz	20	
+r73kfJucPTk5pEdJgYPR	EMpxPYtUBGsbqIpjhUvS2UqM1BYvsn	RZIfRJyS6UKC1VlGCoCnqUEloZ1QGz	60	
+\.
+
+
+--
+-- Name: actions actions_pkey; Type: CONSTRAINT; Schema: public; Owner: kantn
+--
+
+ALTER TABLE ONLY public.actions
+    ADD CONSTRAINT actions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: challenge_exercises challenge_exercises_pkey; Type: CONSTRAINT; Schema: public; Owner: kantn
+--
+
+ALTER TABLE ONLY public.challenge_exercises
+    ADD CONSTRAINT challenge_exercises_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: challenges challenges_name_key; Type: CONSTRAINT; Schema: public; Owner: kantn
+--
+
+ALTER TABLE ONLY public.challenges
+    ADD CONSTRAINT challenges_name_key UNIQUE (name);
+
+
+--
+-- Name: challenges challenges_pkey; Type: CONSTRAINT; Schema: public; Owner: kantn
+--
+
+ALTER TABLE ONLY public.challenges
+    ADD CONSTRAINT challenges_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: exercises exercises_pkey; Type: CONSTRAINT; Schema: public; Owner: kantn
+--
+
+ALTER TABLE ONLY public.exercises
+    ADD CONSTRAINT exercises_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: user_challenges user_challenges_pkey; Type: CONSTRAINT; Schema: public; Owner: kantn
+--
+
+ALTER TABLE ONLY public.user_challenges
+    ADD CONSTRAINT user_challenges_pkey PRIMARY KEY (user_id, challenge_id);
+
+
+--
+-- Name: user_exercises user_exercises_pkey; Type: CONSTRAINT; Schema: public; Owner: kantn
+--
+
+ALTER TABLE ONLY public.user_exercises
+    ADD CONSTRAINT user_exercises_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: users users_email_key; Type: CONSTRAINT; Schema: public; Owner: kantn
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_email_key UNIQUE (email);
+
+
+--
+-- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: kantn
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: users users_user_name_key; Type: CONSTRAINT; Schema: public; Owner: kantn
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_user_name_key UNIQUE (user_name);
+
+
+--
+-- Name: workouts workouts_pkey; Type: CONSTRAINT; Schema: public; Owner: kantn
+--
+
+ALTER TABLE ONLY public.workouts
+    ADD CONSTRAINT workouts_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: actions actions_exercise_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: kantn
+--
+
+ALTER TABLE ONLY public.actions
+    ADD CONSTRAINT actions_exercise_id_fkey FOREIGN KEY (exercise_id) REFERENCES public.exercises(id);
+
+
+--
+-- Name: actions actions_workout_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: kantn
+--
+
+ALTER TABLE ONLY public.actions
+    ADD CONSTRAINT actions_workout_id_fkey FOREIGN KEY (workout_id) REFERENCES public.workouts(id);
+
+
+--
+-- Name: challenge_exercises challenge_exercises_challenge_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: kantn
+--
+
+ALTER TABLE ONLY public.challenge_exercises
+    ADD CONSTRAINT challenge_exercises_challenge_id_fkey FOREIGN KEY (challenge_id) REFERENCES public.challenges(id);
+
+
+--
+-- Name: challenge_exercises challenge_exercises_exercise_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: kantn
+--
+
+ALTER TABLE ONLY public.challenge_exercises
+    ADD CONSTRAINT challenge_exercises_exercise_id_fkey FOREIGN KEY (exercise_id) REFERENCES public.exercises(id);
+
+
+--
+-- Name: exercises exercises_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: kantn
+--
+
+ALTER TABLE ONLY public.exercises
+    ADD CONSTRAINT exercises_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
+-- Name: user_challenges user_challenges_challenge_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: kantn
+--
+
+ALTER TABLE ONLY public.user_challenges
+    ADD CONSTRAINT user_challenges_challenge_id_fkey FOREIGN KEY (challenge_id) REFERENCES public.challenges(id);
+
+
+--
+-- Name: user_challenges user_challenges_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: kantn
+--
+
+ALTER TABLE ONLY public.user_challenges
+    ADD CONSTRAINT user_challenges_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
+-- Name: user_exercises user_exercises_exercise_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: kantn
+--
+
+ALTER TABLE ONLY public.user_exercises
+    ADD CONSTRAINT user_exercises_exercise_id_fkey FOREIGN KEY (exercise_id) REFERENCES public.exercises(id);
+
+
+--
+-- Name: user_exercises user_exercises_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: kantn
+--
+
+ALTER TABLE ONLY public.user_exercises
+    ADD CONSTRAINT user_exercises_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
+-- PostgreSQL database dump complete
+--
+

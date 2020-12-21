@@ -68,13 +68,16 @@ class API_User(Resource):
 
                 return(user.serialize(), 201)
             elif action == "login":
-                if User.query.filter_by(email=_email, password=password).count() == 0:
+                users = User.query.all()
+                print(len(users))
+                user = User.query.filter_by(
+                    email=_email, password=password).first()
+                if user is None:
                     if User.query.filter_by(email=_email).count() == 0:
                         return(({"status": "failure", "message": "Wrong email."}), 400)
                     else:
                         return(({"status": "failure", "message": "Wrong password."}), 400)
-                user = User.query.filter_by(
-                    email=_email, password=password).first()
+                
                 user.date_last_login = datetime.datetime.now()
                 db.session.commit()
                 return(user.serialize(), 201)

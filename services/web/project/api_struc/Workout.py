@@ -6,7 +6,6 @@ from .models import Exercise, Workout, User, Action, db
 import datetime
 import dateutil.parser
 from ..misc import funcs as funcs
-# We need the db object! ahhhhhhhhhh => move it to models.py?! then app needs to import it. is it still the same object if manage.py is then initializing it again when loading models.py? But probably its doing that already anyways..
 
 
 class API_Workout(Resource):
@@ -43,6 +42,12 @@ class API_Workout(Resource):
             except:
                 number = 0
             try:
+                user_id = request.values.get("user_id")
+                if user_id is not None and len(user_id)>5:
+                    user = User.query.get(user_id)
+            except:
+                pass
+            try:
                 latest_edit_date_only = bool(
                     request.values.get("latest_edit_date_only"))
             except:
@@ -63,7 +68,7 @@ class API_Workout(Resource):
                 result = {wo.id: wo.latest_edit.isoformat() for wo in wos}
             else:
                 result = {wo.id: wo.serialize() for wo in wos}
-            return({"status": "success", "data": result})
+            return({"status": "success", "data": result}, 201)
 
         except Exception as e:
             return ({"status": "failure", "message":  str(e)}, 400)
@@ -84,15 +89,21 @@ class API_Workout(Resource):
         data = request.get_json(force=True)  # should be a dict
         print("incoming workout data: "+str(data))
         try:
-            for wo_id in data:
+            for loc_wo_id in data:
                 # check if wo_id is already created, so we only need to update it:
-                wo = Workout.query.filter_by(id=wo_id, user_id=user.id).first()
-                json_wo = data[wo_id]
-                if wo is not None:  # updating existing workout
-                    if not json_wo["not_deleted"]:
+                json_wo = data[loc_wo_id]
+                wo_id = json_wo["id"]
+                local_id = json_wo["local_id"]
+                not_deleted = json_wo["not_deleted"]
+                if wo_id is not None:  # updating existing workout
+                    wo = Workout.query.filter_by(id=wo_id, user_id=user.id).first()
+                else:
+                    wo = None
+                if wo is not None:
+                    if not not_deleted:
                         db.session.delete(wo)
                         db.session.commit()
-                        response[json_wo["local_id"]] = ""
+                        response[local_id] = ""
                         continue
                     wo.date = dateutil.parser.parse(json_wo["date"])
                     wo.note = json_wo["note"]
@@ -123,9 +134,12 @@ class API_Workout(Resource):
                         db.session.add(ac)
                         db.session.commit()
 
-                    response[json_wo["local_id"]] = wo.id
+                    response[local_id] = wo.id
                     db.session.commit()
                 else:  # creating a new workout
+                    if not not_deleted:
+                        response[local_id] = ""
+                        continue
                     new_wo_id = funcs.rand_string(30)
                     wo = Workout(id=new_wo_id,
                                  user_id=user.id,

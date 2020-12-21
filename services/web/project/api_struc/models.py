@@ -1,10 +1,13 @@
 # from flask import Flask
-import random
-from marshmallow import Schema, fields, pre_load, validate
-from flask_marshmallow import Marshmallow
-from datetime import datetime
+# import random
+import hashlib
+# from marshmallow import Schema, fields, pre_load, validate
+from flask_marshmallow import EXTENSION_NAME, Marshmallow
+from datetime import datetime, timedelta
 # from app import db
 from flask_sqlalchemy import SQLAlchemy
+
+from ..misc.workout_overview import calcWorkoutsDict
 
 from ..misc import funcs as funcs
 
@@ -30,6 +33,7 @@ class User(db.Model):
     date_last_login = db.Column(
         db.DateTime(), default=datetime.utcnow())
     challenges = db.relationship("UserChallenge", back_populates="user")
+    workouts = db.relationship("Workout", back_populates="user")
 
     def __repr__(self):
         return('<user_id {}>'.format(self.id))
@@ -40,6 +44,12 @@ class User(db.Model):
             'user_id': self.id,
             'user_name': self.user_name,
             'email': self.email,
+        })
+
+    def description(self):
+        return({
+            'user_id': self.id,
+            'user_name': self.user_name,
         })
 
 
@@ -62,6 +72,7 @@ class Exercise(db.Model):
     checkbox = db.Column(db.Boolean(), default=False) #not yet used, but here for future feature: Exercises which you do on a regular basis, but max 1 per day/week/..
     checkbox_reset = db.Column(db.Integer(), default=2) #1 = per reset checkbox per workout, 2 = reset per day, 3 = reset per week, 4 = reset per month
     latest_edit = db.Column(db.DateTime(), default=datetime.utcnow)
+    challenge_exercises = db.relationship("ChallengeExercise", back_populates="exercise")
 
     def __repr__(self):
         return('<id {}>'.format(self.id))
@@ -71,17 +82,17 @@ class Exercise(db.Model):
             'id': self.id,
             'title': self.title,
             'user_id': self.user_id,
-            'note': self.note,
-            'description': self.description,
-            'unit': self.unit,
             'points': self.points, # points per unit
+            'unit': self.unit,
             'max_points_day': self.max_points_day,
             'max_points_week': self.max_points_week,
             'daily_allowance': self.daily_allowance,
             'weekly_allowance': self.weekly_allowance,
-            'latest_edit': self.latest_edit.isoformat(),
             'checkbox': self.checkbox,
             'checkbox_reset': self.checkbox_reset,
+            'note': self.note,
+            'description': self.description,
+            'latest_edit': self.latest_edit.isoformat(),
         })
 
 class UserExercise(db.Model):
@@ -105,10 +116,12 @@ class UserExercise(db.Model):
         return('<id {}>'.format(self.id))
 
     def serialize(self):
+        ex = Exercise.query.get(self.exercise_id)
         return ({
             'id': self.id,
             'user_id': self.user_id,
             'note': self.note,
+            'unit': ex.unit,
             'exercise_id': self.exercise_id,
             'points': self.points,
             'max_points_day': self.max_points_day,
@@ -131,6 +144,7 @@ class ChallengeExercise(db.Model):
     exercise_id = db.Column(db.String(), db.ForeignKey("exercises.id"))
     challenge_id = db.Column(db.String(), db.ForeignKey("challenges.id"))
     challenge = db.relationship("Challenge", back_populates="exercises")
+    exercise = db.relationship("Exercise", back_populates="challenge_exercises")
     points = db.Column(db.Float(), default=0)
     max_points_day = db.Column(db.Float(), default=0)
     max_points_week = db.Column(db.Float(), default=0)
@@ -144,15 +158,20 @@ class ChallengeExercise(db.Model):
     def serialize(self):
         return ({
             'id': self.id,
+            'title': self.exercise.title,
             'challenge_id': self.challenge.id,
-            'note': self.note,
             'exercise_id': self.exercise_id,
             'points': self.points,
+            'unit': self.exercise.unit,
             'max_points_day': self.max_points_day,
             'max_points_week': self.max_points_week,
             'daily_allowance': self.daily_allowance,
             'weekly_allowance': self.weekly_allowance,
-            'latest_edit': self.latest_edit.isoformat(),
+            'checkbox': self.exercise.checkbox,
+            'checkbox_reset': self.exercise.checkbox_reset,
+            'note': self.note,
+            'description': self.exercise.description,
+            # 'latest_edit': self.latest_edit.isoformat(),
         })
 
     @property
@@ -183,7 +202,7 @@ class Action(db.Model):
             'id': self.id,
             'exercise_id': self.exercise_id,
             'workout_id': self.workout_id,
-            'exercise': Exercise.query.get(self.exercise_id).serialize(),
+            # 'exercise': Exercise.query.get(self.exercise_id).serialize(),
             'number': self.number,
             'note': self.note,
             'points': self.get_points(),
@@ -195,11 +214,12 @@ class Workout(db.Model):
 
     id = db.Column(db.String(), primary_key=True,
                    default=funcs.rand_string)
-    user_id = db.Column(db.String())  # user which did the workout
+    user_id = db.Column(db.String(), db.ForeignKey("users.id"))  # user which did the workout
     date = db.Column(db.DateTime(), default=datetime.utcnow())
     note = db.Column(db.String(), default="")
     actions = db.relationship('Action', backref=db.backref('workout', lazy=True))
     latest_edit = db.Column(db.DateTime(), default=datetime.utcnow)
+    user= db.relationship("User", back_populates="workouts")
 
     def __repr__(self):
         return('<id {}>'.format(self.id))
@@ -214,6 +234,15 @@ class Workout(db.Model):
             'actions': {action.id: action.serialize() for action in self.actions},
             'latest_edit': self.latest_edit.isoformat(),
         })
+    
+    def filter_challenge_exs(self, exercise_ids):
+        return ({
+            'id': self.id,
+            'date': self.date.isoformat(),
+            'actions': {action.id: action.serialize() for action in self.actions if action.exercise_id in exercise_ids},
+            'latest_edit': self.latest_edit.isoformat(),
+        })
+
 
 
 # now doing it differently: for each challenge, we create ChallengeExercises which are only part of one challenge. The ChallengeExercise then references back to an Exercise.
@@ -242,19 +271,55 @@ class Challenge(db.Model):
     #     backref=db.backref('challenges', lazy=True))
     # user_challenges = db.relationship('UserChallenge', secondary="user_challenges")
     min_points = db.Column(db.Float())
-    eval_period = db.Column(db.String())
+    eval_period = db.Column(db.String()) # could be "day", "week", "month", "year"
     start_date = db.Column(db.DateTime())
     end_date = db.Column(db.DateTime())
 
     def __repr__(self):
         return('<id {}>'.format(self.id))
+    
+    def headers(self):
+        # hash = hashlib.md5(str(self.details()))
+        latest_edit = datetime.min
+        for user in self.users:
+            for wo in user.workouts:
+                if wo.latest_edit > latest_edit:
+                    latest_edit = wo.latest_edit
+
+        return ({
+            'id': self.id,
+            'name': self.name,
+            'latest_edit': latest_edit.isoformat(),
+            # 'hash': hash,
+        })
 
     def serialize(self):
         return ({
-            'date': self.date,
-            'note': self.note,
-            'user_id': self.user_id,
             'id': self.id,
+            'name': self.name,
+            'description': self.description,
+            'start_date': self.start_date.isoformat(),
+            'end_date': self.end_date.isoformat(),
+            'min_points': self.min_points,
+            'eval_period': self.eval_period,
+        })
+
+    def details(self):
+        print("creating users_dict")
+        print(self.users)
+        users_dict = {user_challenge.user_id: user_challenge.serialize() for user_challenge in self.users}
+        print("creating exercises_dict")
+        exercises_dict = {challenge_exercise.id: challenge_exercise.serialize() for challenge_exercise in self.exercises}
+        return({
+            'id': self.id,
+            'name': self.name,
+            'description': self.description,
+            'start_date': self.start_date.isoformat(),
+            'end_date': self.end_date.isoformat(),
+            'min_points': self.min_points,
+            'eval_period': self.eval_period,
+            'users': users_dict,
+            'exercises': exercises_dict,
         })
 
 # in this case we implement like described in the documentation for SQLAlchemy v1.3 (which is also valid for 1.4): https://docs.sqlalchemy.org/en/13/orm/basic_relationships.html#association-pattern
@@ -262,6 +327,8 @@ class Challenge(db.Model):
 
 class UserChallenge(db.Model):
     __tablename__ = 'user_challenges'
+    # id = db.Column(db.String(), primary_key=True,
+    #                default=funcs.rand_string)
     user_id = db.Column(db.String(), db.ForeignKey(
         'users.id'), primary_key=True)
     challenge_id = db.Column(db.String(), db.ForeignKey(
@@ -270,3 +337,21 @@ class UserChallenge(db.Model):
     # if user is deleted, his association to challenges should be deleted too. However, we don't want to delete the user if he drops out of a challenge ;)
     user = db.relationship('User', back_populates="challenges")
     challenge = db.relationship('Challenge', back_populates="users")
+
+    def serialize(self, latest_edit = datetime.min):
+        # returns dict with user_id, user_name, user_start_challenge (date) and dict of workouts (workouts are filtered: only days are included which are after the oldest workout that was created/edited after latest_edit)
+
+        exercises = {ch_ex.exercise.id: ch_ex for ch_ex in self.challenge.exercises}
+        workouts_dict = calcWorkoutsDict(exercises, self.user.workouts, max(latest_edit, self.user_start_challenge))
+        return({
+            'user_id': self.user_id,
+            'user_name': self.user.user_name,
+            'user_start_challenge': self.user_start_challenge.isoformat(),
+            'workouts': workouts_dict,
+            'latest_edit': self.latestUpdate().isoformat()
+        })
+    
+    def latestUpdate(self):
+        dates = [wo.latest_edit for wo in self.user.workouts]
+        return(max(dates))
+

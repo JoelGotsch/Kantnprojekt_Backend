@@ -6,7 +6,7 @@ import string
 
 class Test(Resource):
     def get(self):
-        return({"message": "success1"}, 201)
+        return({"message": "success2"}, 201)
         # try:
         #     wos = Workout.query.filter_by(user_id=1).all()#
         #     result={str(wo.id): wo.serialize() for wo in wos}
