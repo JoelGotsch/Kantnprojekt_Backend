@@ -106,7 +106,7 @@ and create the virtual environment via `python3.8 -m venv venv` which creates th
 
 1. Next step: using gunicorn: `gunicorn -w 3 kantn` (making 3 worker processes) would run the flask app locally on the server. However, it is more useful for debugging to start flask directly via the debugging tool in VS Code as that enables hot-reloading. For production we will use a docker container.
 
-1. If you installed pgadmin4 like described above, you can now also connect via the webbrowser to pgadmin after starting the service via gunicorn (you will need gunicorn installed, so best use your virtual environment):
+1. The easiest way is to use the Makefile: `make extract_docker_data_to_local`. Otherwise: If you installed pgadmin4 like described above, you can now also connect via the webbrowser to pgadmin after starting the service via gunicorn (you will need gunicorn installed, so best use your virtual environment):
 
         gunicorn --bind unix:/tmp/pgadmin4.sock \
                 --workers=1 \
@@ -175,6 +175,7 @@ and create the virtual environment via `python3.8 -m venv venv` which creates th
 
 ## Useful docker commands
 - To step into a docker container bash run `docker container ls` to see the docker containers and their names which are running. In this case we want to have a shell in `kantnprojekt_backend_web_1`. We also want to be root, so we set the user to that, otherwise we would be "app" which can't install anything. So the command is `docker exec --user "root" -it kantnprojekt_backend_web_1 /bin/bash`.
+- To clean space from time to time, use `docker image prune`
 
 
 ## How to change/ adapt code:
@@ -215,12 +216,17 @@ Lets do that manually:
 
         server {
             listen 443 ssl;
-            server_name api.kantnprojekt.com; 
+            server_name api.kantnprojekt.com;
             ssl_certificate /etc/letsencrypt/live/api.kantnprojekt.club/fullchain.pem; # Path to the full chain of your SSL certificate
             ssl_certificate_key /etc/letsencrypt/live/api.kantnprojekt.club/privkey.pem; # Path to the private key of your SSL certificate
 
                 location /v0_2 {
                         proxy_pass http://0.0.0.0:8003;
+                        proxy_set_header Host $host;
+                        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                }
+                location /test {
+                        proxy_pass http://0.0.0.0:9003;
                         proxy_set_header Host $host;
                         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
                 }
@@ -237,5 +243,7 @@ Lets do that manually:
                 }
         }
 
- ``
+
+    - The idea is, that the docker container runs on port 8003 internally on the server and is reachable throught api.kantnprojekt.com/v0_2/
+    while  we can also run our flask in debug mode from VS Code (for development) on api.kantnprojekt.com/test/v0_2 :)
     - Reload nginx: `sudo nginx -s reload` 

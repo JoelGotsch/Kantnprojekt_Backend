@@ -49,7 +49,10 @@ def print_workouts():
 
 @manager.command
 def create_db():
-    db.drop_all()
+    try:
+        db.drop_all()
+    except Exception as e:
+        print(e)
     db.create_all()
     db.session.commit()
 

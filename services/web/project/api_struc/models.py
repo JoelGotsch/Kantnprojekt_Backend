@@ -353,5 +353,6 @@ class UserChallenge(db.Model):
     
     def latestUpdate(self):
         dates = [wo.latest_edit for wo in self.user.workouts]
+        dates.append(datetime.min)
         return(max(dates))
 

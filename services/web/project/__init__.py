@@ -21,10 +21,14 @@ api.add_resource(API_ChallengeAccept, "/challengeaccept")
 
 # for testing: add /test in url-prefix and use configtest to use the kantnprojekt2 database instead!
 app = Flask(__name__)
-app.config.from_object("project.config.Config")
+
+# app.config.from_object("project.config.Config")
+app.config.from_object("project.configtest.Config")
+
 db.init_app(app)
 # handle migration via manage.py file!
 
-app.register_blueprint(api_bp, url_prefix='/'+str(__version__))
+# app.register_blueprint(api_bp, url_prefix='/'+str(__version__))
+app.register_blueprint(api_bp, url_prefix='/test')
 if __name__=="__main__":
     print("__init__.py was run now!!")

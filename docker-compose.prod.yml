@@ -7,7 +7,7 @@ services:
       context: ./services/web
       dockerfile: Dockerfile.prod
     
-    command: gunicorn --bind 0.0.0.0:8002 manage:app
+    # command: gunicorn --bind 0.0.0.0:8002 manage:app
     depends_on:
       - postgres
     # volumes:

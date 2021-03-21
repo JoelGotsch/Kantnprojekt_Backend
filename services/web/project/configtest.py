@@ -16,5 +16,5 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 class Config(object):
     # SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", "postgres+psycopg2://kantn:password@0.0.0.0:5433/kantnprojekt")
-    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", "postgres+psycopg2://kantn:password@127.0.0.1:5432/kantnprojekt2")
+    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", "postgresql+psycopg2://kantn:password@127.0.0.1:5432/kantnprojekt2")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
