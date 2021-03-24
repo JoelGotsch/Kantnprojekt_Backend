@@ -183,6 +183,7 @@ def restore_backup_dump_docker(filename=""):
 #     # subprocess.check_output()
 @manager.command
 def add_missing_user_exercises():
+    # creating a user-exercise for each exercise
     # check if user-exercises where deleted also (it should be!)
     # db.session.commit()
     for user in User.query.all():

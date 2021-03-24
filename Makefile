@@ -16,12 +16,12 @@ reset:
 	docker-compose -f docker-compose.prod.yml down -v
 	docker-compose -f docker-compose.prod.yml up -d --build
 	docker-compose -f docker-compose.prod.yml exec web python manage.py create_db
-	docker-compose -f docker-compose.prod.yml exec -T postgres psql -U kantn -d kantnprojekt_db < /home/Kantnprojekt_Backend/services/web/project/backups/2021-03-21.dump
-	docker-compose -f docker-compose.prod.yml exec -T postgres psql -U kantn -d kantnprojekt_db < /home/Kantnprojekt_Backend/services/web/project/backups/2021-03-21.dump
-	docker-compose -f docker-compose.prod.yml exec -T postgres psql -U kantn -d kantnprojekt_db < /home/Kantnprojekt_Backend/services/web/project/backups/2021-03-21.dump
-	docker-compose -f docker-compose.prod.yml exec -T postgres psql -U kantn -d kantnprojekt_db < /home/Kantnprojekt_Backend/services/web/project/backups/2021-03-21.dump
-	docker-compose -f docker-compose.prod.yml exec -T postgres psql -U kantn -d kantnprojekt_db < /home/Kantnprojekt_Backend/services/web/project/backups/2021-03-21.dump
-	docker-compose -f docker-compose.prod.yml exec -T postgres psql -U kantn -d kantnprojekt_db < /home/Kantnprojekt_Backend/services/web/project/backups/2021-03-21.dump
+	docker-compose -f docker-compose.prod.yml exec -T postgres psql -U kantn -d kantnprojekt_db < /home/Kantnprojekt_Backend/services/web/project/backups/2021-03-23.dump
+	docker-compose -f docker-compose.prod.yml exec -T postgres psql -U kantn -d kantnprojekt_db < /home/Kantnprojekt_Backend/services/web/project/backups/2021-03-23.dump
+	docker-compose -f docker-compose.prod.yml exec -T postgres psql -U kantn -d kantnprojekt_db < /home/Kantnprojekt_Backend/services/web/project/backups/2021-03-23.dump
+	docker-compose -f docker-compose.prod.yml exec -T postgres psql -U kantn -d kantnprojekt_db < /home/Kantnprojekt_Backend/services/web/project/backups/2021-03-23.dump
+	docker-compose -f docker-compose.prod.yml exec -T postgres psql -U kantn -d kantnprojekt_db < /home/Kantnprojekt_Backend/services/web/project/backups/2021-03-23.dump
+	docker-compose -f docker-compose.prod.yml exec -T postgres psql -U kantn -d kantnprojekt_db < /home/Kantnprojekt_Backend/services/web/project/backups/2021-03-23.dump
 
 restart:
 	docker-compose -f docker-compose.debug.yml down -v
@@ -35,6 +35,21 @@ restart:
 	# docker-compose -f docker-compose.prod.yml exec -T postgres psql -U kantn -d kantnprojekt_db < /home/Kantnprojekt_Backend/services/web/project/backups/2020-12.21.dump
 	# docker-compose -f docker-compose.prod.yml exec web python manage.py add_missing_user_exercises
 	# docker-compose -f docker-compose.prod.yml exec web python manage.py start_kantnprojekt_december
+
+deployment_v10:
+	docker-compose -f docker-compose.debug.yml down -v
+	docker-compose -f docker-compose.prod.yml down -v
+	docker-compose -f docker-compose.prod.yml up -d --build
+	docker-compose -f docker-compose.prod.yml exec web python manage.py create_db
+	docker-compose -f docker-compose.prod.yml exec -T postgres psql -U kantn -d kantnprojekt_db < /home/Kantnprojekt_Backend/services/web/project/backups/2021-03-23.dump
+	docker-compose -f docker-compose.prod.yml exec -T postgres psql -U kantn -d kantnprojekt_db < /home/Kantnprojekt_Backend/services/web/project/backups/2021-03-23.dump
+	docker-compose -f docker-compose.prod.yml exec -T postgres psql -U kantn -d kantnprojekt_db < /home/Kantnprojekt_Backend/services/web/project/backups/2021-03-23.dump
+	docker-compose -f docker-compose.prod.yml exec -T postgres psql -U kantn -d kantnprojekt_db < /home/Kantnprojekt_Backend/services/web/project/backups/2021-03-23.dump
+	docker-compose -f docker-compose.prod.yml exec -T postgres psql -U kantn -d kantnprojekt_db < /home/Kantnprojekt_Backend/services/web/project/backups/2021-03-23.dump
+	docker-compose -f docker-compose.prod.yml exec -T postgres psql -U kantn -d kantnprojekt_db < /home/Kantnprojekt_Backend/services/web/project/backups/2021-03-23.dump
+	docker-compose -f docker-compose.prod.yml exec web python manage.py add_missing_user_exercises
+
+
 
 deploymentv2Api:
 	# in nginx rerouting to v0_2 needs to be done!

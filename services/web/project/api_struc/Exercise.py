@@ -80,6 +80,7 @@ class API_Exercise(Resource):
         # should be a dict like common_exercises_dict. Automatically creates then the common_exercise and the user_exercise.
         # returns a dict with sub-dicts common_exercises and user_exercises where instead of the exercise data the id is sent (is used to update local id)
         response = {"user_exercises": {}, "common_exercises": {}}
+        _new_exercise=False
         try:
             token = request.headers.get("token")
             user = User.query.filter_by(token=token).first()
@@ -127,44 +128,48 @@ class API_Exercise(Resource):
                     response["user_exercises"][local_id] = us_ex.id
                     db.session.commit()
                 else:  # creating a new user exercise (and Exercise if it is linked to a non-existent one)
-                    ex = Exercise.query.get(ex_id) # if not None, only update of Exercise, creation of UserExercise.
-                    if ex is None:
-                        if Exercise.query.filter_by(title = title).first() is not None:
-                            print("Exercise with that title already exists. Choose a different title.")
-                            return(({"status": "failure", "message": "Exercise with that title already exists. Choose a different title."}), 400)
-                        # completely new exercise
-                        ex = Exercise(
-                            title=title,
-                            note=note,
-                            description=description,
-                            user_id=user.id,
-                            unit=unit,
-                            points=points,
-                            max_points_day=max_points_day,
-                            max_points_week=max_points_week,
-                            daily_allowance=daily_allowance,
-                            weekly_allowance=weekly_allowance,
-                            checkbox=checkbox,
-                            checkbox_reset=checkbox_reset,
-                            latest_edit=latest_edit,
-                        )
-                        db.session.add(ex)
-                        db.session.commit()
-                    us_ex = UserExercise(
+                    ex = Exercise.query.filter_by(title = title).first()
+                    if ex is not None:
+                        print("Exercise with that title already exists. Choose a different title.")
+                        response["common_exercises"][local_id] = ex.id
+                        response["user_exercises"][local_id] = {"status": "failure", "message": "Exercise with that title already exists. Choose a different title."}
+                        continue
+                    # completely new exercise
+                    _new_exercise=True
+                    ex = Exercise(
+                        title=title,
                         note=note,
-                        exercise_id = ex.id,
+                        description=description,
                         user_id=user.id,
-                        user=user,
+                        unit=unit,
                         points=points,
                         max_points_day=max_points_day,
                         max_points_week=max_points_week,
                         daily_allowance=daily_allowance,
                         weekly_allowance=weekly_allowance,
+                        checkbox=checkbox,
+                        checkbox_reset=checkbox_reset,
                         latest_edit=latest_edit,
-                        private=private,
                     )
-                    db.session.add(us_ex)
+                    db.session.add(ex)
                     db.session.commit()
+                    # creating user exercise for every user:
+                    for other_user in User.query.all():
+                        us_ex = UserExercise(
+                            note=note,
+                            exercise_id = ex.id,
+                            user_id=other_user.id,
+                            user=other_user,
+                            points=points,
+                            max_points_day=max_points_day,
+                            max_points_week=max_points_week,
+                            daily_allowance=daily_allowance,
+                            weekly_allowance=weekly_allowance,
+                            latest_edit=latest_edit,
+                            private=private,
+                        )
+                        db.session.add(us_ex)
+                        db.session.commit()
                     response["common_exercises"][local_id] = ex.id
                     response["user_exercises"][local_id] = us_ex.id
             return({"status": 'success', 'data': response}, 201)
