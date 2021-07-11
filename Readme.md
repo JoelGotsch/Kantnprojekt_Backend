@@ -13,7 +13,7 @@ Also great is this page: https://morioh.com/p/116ad91ca651 with a little bit mor
 
 ## First time start:
 1. Install and set up PostgreSQL. We need to create a user "kantn" and a database "kantnprojekt" with password "password" on port `127.0.0.1` and port `5433`(which we will also use within the docker environment, so things don`t change). Also see https://wiki.debian.org/PostgreSql
-    - `apt-get update` and `apt-get install postgresql` `createuser kant
+    - `apt-get update` and `apt-get install postgresql` then `createuser kantn`
     - create role `kantn` (= database username): `sudo -i -u postgres` (now you switched to the postgres user)
     - create the database `createdb kantnprojekt`
     - set password for user: `psql` and then `alter user kantn with encrypted password 'password';` (console should print `ALTER ROLE`)
@@ -174,7 +174,17 @@ and create the virtual environment via `python3.8 -m venv venv` which creates th
 
 
 ## Useful docker commands
-- To step into a docker container bash run `docker container ls` to see the docker containers and their names which are running. In this case we want to have a shell in `kantnprojekt_backend_web_1`. We also want to be root, so we set the user to that, otherwise we would be "app" which can't install anything. So the command is `docker exec --user "root" -it kantnprojekt_backend_web_1 /bin/bash`.
+- To step into a docker container bash run `docker container ls` to see the docker containers and their names which are running. In this case we want to have a shell in `kantnprojekt_backend_web_1`. We also want to be root, so we set the user to that, otherwise we would be "app" which can't install anything. So the command is `docker exec --user "root" -it kantnprojekt_backend_web_1 /bin/bash`. or `docker exec --user "postgres" -it kantnprojekt_backend_postgres_1 /bin/bash` for the database stuff.
+After which you can for example drop the database and create it fresh:
+```bash
+export PGPASSWORD='password'; dropdb -U kantn kantnprojekt_db
+export PGPASSWORD='password'; createdb -U kantn -T template0 kantnprojekt_db
+```
+afterwards you can exit the container with `exit` and then use a command like 
+```bash
+docker-compose -f docker-compose.prod.yml exec -T postgres psql -U kantn -d kantnprojekt_db < /home/Kantnprojekt_Backend/services/web/project/backups/2021-07-09.dump
+```
+to fill the database with an old dump.
 - To clean space from time to time, use `docker image prune`
 
 
@@ -213,36 +223,33 @@ Lets do that manually:
         }
 
     - The file should look like this now:
-
-        server {
-            listen 443 ssl;
-            server_name api.kantnprojekt.com;
-            ssl_certificate /etc/letsencrypt/live/api.kantnprojekt.club/fullchain.pem; # Path to the full chain of your SSL certificate
-            ssl_certificate_key /etc/letsencrypt/live/api.kantnprojekt.club/privkey.pem; # Path to the private key of your SSL certificate
-
-                location /v0_2 {
-                        proxy_pass http://0.0.0.0:8003;
-                        proxy_set_header Host $host;
-                        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                }
-                location /test {
-                        proxy_pass http://0.0.0.0:9003;
-                        proxy_set_header Host $host;
-                        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                }
+```
+server {
+    listen 443 ssl;
+    server_name api.kantnprojekt.com;
+    ssl_certificate /etc/letsencrypt/live/api.kantnprojekt.club/fullchain.pem; # Path to the full chain of your SSL certificate
+    ssl_certificate_key /etc/letsencrypt/live/api.kantnprojekt.club/privkey.pem; # Path to the private key of your SSL certificate
+        location /v0_2 {
+                proxy_pass http://0.0.0.0:8003;
+                proxy_set_header Host $host;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         }
-
-        server {
-                listen 80;
-                server_name "172.105.69.58";
-
-                location /pgadmin4 {
-                        include proxy_params;
-                        proxy_pass http://unix:/tmp/pgadmin4.sock;
-                        proxy_set_header X-Script-Name /pgadmin4;
-                }
+        location /test {
+                proxy_pass http://0.0.0.0:9003;
+                proxy_set_header Host $host;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         }
-
+}
+server {
+        listen 80;
+        server_name "172.105.69.58";
+        location /pgadmin4 {
+                include proxy_params;
+                proxy_pass http://unix:/tmp/pgadmin4.sock;
+                proxy_set_header X-Script-Name /pgadmin4;
+        }
+}
+```
 
     - The idea is, that the docker container runs on port 8003 internally on the server and is reachable throught api.kantnprojekt.com/v0_2/
     while  we can also run our flask in debug mode from VS Code (for development) on api.kantnprojekt.com/test/v0_2 :)
