@@ -6,15 +6,20 @@ from .models import Exercise, Workout, User, Action, db
 import datetime
 import dateutil.parser
 from ..misc import funcs as funcs
+import logging
 
-
+#TODO: Check if utc times are now used for all latest_edit dates and updating workouts on different phones at the same time works..
+# Old: latest_edit when uploaded is local time of phone user. however, datetime.datetime.now() is utc time. Would be good to work in utc time only, on phone and server.
 class API_Workout(Resource):
     def get(self):
+        logging.info("Get Workout: Start")
+        logging.debug("Get Workout: {}".format(request))
         try:
             token = request.headers.get("token")
             user = User.query.filter(User.token == token).first()
             wos = []
             if user is None:
+                logging.debug("Get Workout: invalid token")
                 return {"status": "failure", "message": "Token is invalid!"}, 400
             try:
                 workout_id = request.values.get("workout_id")
@@ -36,14 +41,14 @@ class API_Workout(Resource):
                 end_date = dateutil.parser.parse(
                     request.values.get("end_date"))
             except:
-                end_date = datetime.datetime.now()
+                end_date = datetime.datetime.now() + datetime.timedelta(days=1)
             try:
                 number = int(request.values.get("number"))
             except:
                 number = 0
             try:
                 user_id = request.values.get("user_id")
-                if user_id is not None and len(user_id)>5:
+                if user_id is not None and len(user_id) > 5:
                     user = User.query.get(user_id)
             except:
                 pass
@@ -52,6 +57,8 @@ class API_Workout(Resource):
                     request.values.get("latest_edit_date_only"))
             except:
                 latest_edit_date_only = False
+            logging.debug(
+                f"Get Workout: {user.user_name=}, {latest_edit_date=}, {start_date=}, {end_date=}, {number=}, {user_id=}, {latest_edit_date_only=}")
             if len(wos) == 0:
                 if number == 0:
                     wos = Workout.query.filter(
@@ -68,26 +75,31 @@ class API_Workout(Resource):
                 result = {wo.id: wo.latest_edit.isoformat() for wo in wos}
             else:
                 result = {wo.id: wo.serialize() for wo in wos}
+            logging.debug(f"Get Workout: {result=}")
             return({"status": "success", "data": result}, 201)
 
         except Exception as e:
+            logging.exception(f"Get Workout: {e=}")
             return ({"status": "failure", "message":  str(e)}, 400)
 
     def post(self):
         # has to have
         response = {}
+        logging.info("Post Workout: Start")
         try:
             token = request.headers.get("token")
             # firebase_id_token=request.values.get("firebase_id_token")
             # verify the id token with firebase admin package! only then return api key.
             user = User.query.filter_by(token=token).first()
             if user is None:
+                logging.exception("Post Workout: Authentication didn't work")
                 return(({"status": "failure", "message": "Authentication didn't work"}), 400)
         except Exception as e:
+            logging.exception(f"Post Workout: {e=}")
             return ({"message":  str(e)}, 400)
 
         data = request.get_json(force=True)  # should be a dict
-        print("incoming workout data: "+str(data))
+        logging.debug(f"Post Workout: {data=}")
         try:
             for loc_wo_id in data:
                 # check if wo_id is already created, so we only need to update it:
@@ -96,7 +108,8 @@ class API_Workout(Resource):
                 local_id = json_wo["local_id"]
                 not_deleted = json_wo["not_deleted"]
                 if wo_id is not None:  # updating existing workout
-                    wo = Workout.query.filter_by(id=wo_id, user_id=user.id).first()
+                    wo = Workout.query.filter_by(
+                        id=wo_id, user_id=user.id).first()
                 else:
                     wo = None
                 if wo is not None:
@@ -126,7 +139,13 @@ class API_Workout(Resource):
                         # check if exercise exists already:
 
                         if Exercise.query.get(json_ac["exercise_id"]) is None:
-                            return(({"status": "failure", "message": "Exercise " + json_ac["exercise_id"] + " from workout "+json_wo['local_id']+" is not stored on the server."}), 400)
+                            errmsg = "Exercise " + \
+                                json_ac["exercise_id"] + " from workout " + \
+                                json_wo['local_id'] + \
+                                " is not stored on the server."
+                            logging.exception(
+                                "Post Workout: {}".format(errmsg))
+                            return(({"status": "failure", "message": errmsg}), 400)
 
                         ac = Action(id=ac_key, exercise_id=json_ac["exercise_id"], workout_id=wo.id,
                                     number=json_ac["number"], note=json_ac["note"])
@@ -154,16 +173,23 @@ class API_Workout(Resource):
                     for ac_key in json_wo["actions"]:
                         json_ac = json_wo["actions"][ac_key]
                         if Exercise.query.get(json_ac["exercise_id"]) is None:
-                            return(({"status": "failure", "message": "Exercise {exercise_id} from workout "+json_wo['local_id']+" is not stored on the server."}), 400)
-
+                            errmsg = "Exercise " + \
+                                json_ac["exercise_id"] + " from workout " + \
+                                json_wo['local_id'] + \
+                                " is not stored on the server."
+                            logging.exception(
+                                "Post Workout: {}".format(errmsg))
+                            return(({"status": "failure", "message": errmsg}), 400)
                         ac = Action(id=funcs.rand_string(30), exercise_id=json_ac["exercise_id"], workout_id=wo.id,
                                     number=json_ac["number"], note=json_ac["note"])
                         wo.actions.append(ac)
                         db.session.add(ac)
                         db.session.commit()
+            logging.debug(f"Post Workout: {response=}")
             return({"status": 'success', 'data': response}, 201)
         except Exception as e:
-            print(e)
+            logging.exception(
+                f"Post Workout: Could not read json or header. {e=}")
             return(({"status": "failure", "message": "Could not read json or header."}), 400)
 
     def delete(self):  # done via "not_deleted" = False

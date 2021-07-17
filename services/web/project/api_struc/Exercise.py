@@ -9,15 +9,17 @@ import logging
 
 class API_Exercise(Resource):
     def get(self):
+        logging.info("Get Exercise: Start")
         common_exercises_dict = {}
         user_exercises_dict = {}
         challenge_exercises_dict = {}
         try:
             token = request.headers.get("token")
             user = User.query.filter(User.token == token).first()
-            logging.info("get exercise request from "+user.user_name + " " + user.id)
-            logging.debug("Exercise get request : \n" + str(request))
+            logging.info(f"Get Exercise: request from {user.user_name=} {user.id=}")
+            logging.debug(f"Get Exercise: {request=}")
             if user is None:
+                logging.exception("Get Exercise: Token is invalid!")
                 return {"status": "failure","message": "Token is invalid!"}, 400
             try:
                 latest_edit_date = dateutil.parser.parse(
@@ -37,13 +39,9 @@ class API_Exercise(Resource):
                 user_exercise_ids = request.values.get("user_exercise_ids").split(",")
             except:
                 user_exercise_ids = []
-
-            # if len(exercises) == 0:
+            logging.debug(
+                f"Get Exercise: {user.user_name=}, {latest_edit_date=}, {exercise_ids=}, {user_exercise_ids=}, {latest_edit_date_only=}")
             admin_user = User.query.filter_by(user_name="kantnprojekt").first()
-            # try:
-            #     print(admin_user.exercises)
-            # except Exception:
-            #     print(Exception)
             if (len(exercise_ids) == 0):
                 ex_list = [Exercise.query.get(ex.exercise_id) for ex in admin_user.exercises if ex.latest_edit >= latest_edit_date]
             else:
@@ -66,40 +64,35 @@ class API_Exercise(Resource):
                 for userchallenge in user.challenges:
                     challenge_exercises = userchallenge.challenge.exercises
                     challenge_exercises_dict[userchallenge.challenge.id] = {ex.id: ex.serialize() for ex in challenge_exercises if ex.latest_edit >= latest_edit_date}
-            result = {"common_exercises": common_exercises_dict,
+            response = {"common_exercises": common_exercises_dict,
                       "user_exercises": user_exercises_dict,
                       "challenge_exercises": challenge_exercises_dict}
-            # print(datetime.datetime.now())
-            # print(result)
-            logging.debug(result)
-            return({"status": "success", "data":  result}, 201)
+            logging.debug(f"Get Exercise: {response=}")
+            return({"status": "success", "data":  response}, 201)
 
         except Exception as e:
-            print(e)
+            logging.exception(f"Get Exercise: {e=}")
             return ({"status": "failure", "message":  str(e)}, 400)
 
     def post(self):
         # should be a dict like common_exercises_dict. Automatically creates then the common_exercise and the user_exercise.
         # returns a dict with sub-dicts common_exercises and user_exercises where instead of the exercise data the id is sent (is used to update local id)
         response = {"user_exercises": {}, "common_exercises": {}}
-        _new_exercise=False
         try:
             token = request.headers.get("token")
             user = User.query.filter_by(token=token).first()
             if user is None:
-                logging.warning("Post Exercise: Authentication didn't work")
+                logging.exception("Post Exercise: Authentication didn't work")
                 return(({"status": "failure", "message": "Authentication didn't work"}), 400)
         except Exception as e:
-            logging.warning("Post Exercise: "+str(e))
+            logging.exception(f"Post Exercise: {e=}")
             return ({"status": "failure", "message":  str(e)}, 400)
 
         data = request.get_json(force=True)  
-        logging.debug("incoming exercise data: "+str(data))
+        logging.debug(f"Post Exercise: {data=}")
         try:
             for us_ex_id in data:
                 json_ex = data[us_ex_id]
-                # print(json_ex.get("absd")) # this does not throw an error
-                # print(json_ex["absd"]) # this does throw an error
                 ex_id = json_ex.get("exercise_id")
                 # check if ex_id is already created, so we only need to update it:
                 note = json_ex.get("note")
@@ -108,19 +101,20 @@ class API_Exercise(Resource):
                 max_points_week = json_ex.get("max_points_week")
                 daily_allowance = json_ex.get("daily_allowance")
                 weekly_allowance = json_ex.get("weekly_allowance")
-                private = json_ex.get("private")
+                private = json_ex.get("private", False)
                 latest_edit = dateutil.parser.parse(json_ex.get("latest_edit"))
                 local_id = json_ex.get("local_id")
                 title = json_ex.get("title")
                 description = json_ex.get("description")
                 unit = json_ex.get("unit")
-                checkbox = json_ex.get("checkbox")
-                checkbox_reset = json_ex.get("checkbox_reset")
+                checkbox = json_ex.get("checkbox", False)
+                checkbox_reset = json_ex.get("checkbox_reset", 2)
+                logging.debug(
+                    f"Post Exercise: {note=}, {points=}, {max_points_day=}, {max_points_week=}, {daily_allowance=}, {weekly_allowance=}, {private=}, {latest_edit=}, {local_id=}, {title=}, {description=}, {unit=}, {checkbox=}, {checkbox_reset=}")
                 us_ex = UserExercise.query.get(us_ex_id)
                 if us_ex is not None:  # updating existing user exercise
                     # if the user created the exercise, he can update some more infos like the notes
-                    # if note != "" and user.id == Exercise.query.get(ex.exercise_id).user_id
-                    # ex_id == us_ex.exercise_id
+                    logging.debug("Post Exercise: Updating User-Exercise")
                     us_ex.note = note
                     us_ex.points = points
                     us_ex.max_points_day = max_points_day
@@ -132,14 +126,14 @@ class API_Exercise(Resource):
                     response["user_exercises"][local_id] = us_ex.id
                     db.session.commit()
                 else:  # creating a new user exercise (and Exercise if it is linked to a non-existent one)
+                    logging.debug("Post Exercise: Creating new exercise and User Exercises")
                     ex = Exercise.query.filter_by(title = title).first()
                     if ex is not None:
-                        logging.warning("Exercise with that title already exists. Choose a different title.")
+                        logging.warning(f"Post Exercise: Exercise with that {title=} already exists. Choose a different title.")
                         response["common_exercises"][local_id] = ex.id
                         response["user_exercises"][local_id] = {"status": "failure", "message": "Exercise with that title already exists. Choose a different title."}
                         continue
                     # completely new exercise
-                    _new_exercise=True
                     ex = Exercise(
                         title=title,
                         note=note,
@@ -176,12 +170,10 @@ class API_Exercise(Resource):
                         db.session.commit()
                     response["common_exercises"][local_id] = ex.id
                     response["user_exercises"][local_id] = us_ex.id
-            logging.debug("Exercise post response:")
-            logging.debug(response)
+            logging.debug(f"Post Exercise: {response=}")
             return({"status": 'success', 'data': response}, 201)
         except Exception as e:
-            print(e)
-            logging.error("Could not read json or header.")
+            logging.exception(f"Post Exercise: Could not read json or header. {e=}")
             return(({"status": "failure", "message": "Could not read json or header."}), 400)
 
     def delete(self):  # done via "not_deleted" = False

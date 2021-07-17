@@ -51,7 +51,10 @@ deployment_v11:
 	
 	# docker-compose -f docker-compose.prod.yml exec web python manage.py add_missing_user_exercises
 
-
+backup_to_local:
+	su postgres -c 'psql -c "DROP DATABASE kantnprojekt2 WITH (FORCE);"'
+	su postgres -c "createdb -T template0 kantnprojekt2"
+	export PGPASSWORD='password'; psql -U kantn --host=localhost -d kantnprojekt2 < /home/Kantnprojekt_Backend/services/web/project/backups/2021-07-17.dump 
 
 deploymentv2Api:
 	# in nginx rerouting to v0_2 needs to be done!

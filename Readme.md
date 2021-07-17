@@ -205,6 +205,7 @@ For changes: If the API return is in a different format (new variables), then th
 
 ### Other useful commands:
 - Kill all gunicorn processes: `ps -ef | grep 'gunicorn' | grep -v grep | awk '{print $2}' | xargs -r kill -9`
+- Follow a logfile: `tail -f kantnprojekt.log`
 
 # Optional: Enable https
 
