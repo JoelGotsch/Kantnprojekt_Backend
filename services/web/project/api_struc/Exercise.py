@@ -4,8 +4,8 @@ from .models import User, Exercise, UserExercise, ChallengeExercise, db
 import datetime
 import dateutil.parser
 from ..misc import funcs as funcs
+import logging
 # We need the db object! ahhhhhhhhhh => move it to models.py?! then app needs to import it. is it still the same object if manage.py is then initializing it again when loading models.py? But probably its doing that already anyways..
-
 
 class API_Exercise(Resource):
     def get(self):
@@ -15,7 +15,8 @@ class API_Exercise(Resource):
         try:
             token = request.headers.get("token")
             user = User.query.filter(User.token == token).first()
-            print("get exercise request from "+user.user_name + " " + user.id)
+            logging.info("get exercise request from "+user.user_name + " " + user.id)
+            logging.debug("Exercise get request : \n" + str(request))
             if user is None:
                 return {"status": "failure","message": "Token is invalid!"}, 400
             try:
@@ -70,6 +71,7 @@ class API_Exercise(Resource):
                       "challenge_exercises": challenge_exercises_dict}
             # print(datetime.datetime.now())
             # print(result)
+            logging.debug(result)
             return({"status": "success", "data":  result}, 201)
 
         except Exception as e:
@@ -85,12 +87,14 @@ class API_Exercise(Resource):
             token = request.headers.get("token")
             user = User.query.filter_by(token=token).first()
             if user is None:
+                logging.warning("Post Exercise: Authentication didn't work")
                 return(({"status": "failure", "message": "Authentication didn't work"}), 400)
         except Exception as e:
+            logging.warning("Post Exercise: "+str(e))
             return ({"status": "failure", "message":  str(e)}, 400)
 
         data = request.get_json(force=True)  
-        print("incoming exercise data: "+str(data))
+        logging.debug("incoming exercise data: "+str(data))
         try:
             for us_ex_id in data:
                 json_ex = data[us_ex_id]
@@ -130,7 +134,7 @@ class API_Exercise(Resource):
                 else:  # creating a new user exercise (and Exercise if it is linked to a non-existent one)
                     ex = Exercise.query.filter_by(title = title).first()
                     if ex is not None:
-                        print("Exercise with that title already exists. Choose a different title.")
+                        logging.warning("Exercise with that title already exists. Choose a different title.")
                         response["common_exercises"][local_id] = ex.id
                         response["user_exercises"][local_id] = {"status": "failure", "message": "Exercise with that title already exists. Choose a different title."}
                         continue
@@ -172,9 +176,12 @@ class API_Exercise(Resource):
                         db.session.commit()
                     response["common_exercises"][local_id] = ex.id
                     response["user_exercises"][local_id] = us_ex.id
+            logging.debug("Exercise post response:")
+            logging.debug(response)
             return({"status": 'success', 'data': response}, 201)
         except Exception as e:
             print(e)
+            logging.error("Could not read json or header.")
             return(({"status": "failure", "message": "Could not read json or header."}), 400)
 
     def delete(self):  # done via "not_deleted" = False

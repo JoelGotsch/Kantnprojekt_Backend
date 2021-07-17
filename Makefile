@@ -15,24 +15,17 @@ reset:
 	docker-compose -f docker-compose.debug.yml down -v
 	docker-compose -f docker-compose.prod.yml down -v
 	docker-compose -f docker-compose.prod.yml up -d --build
-	docker-compose -f docker-compose.prod.yml exec web python manage.py create_db
-	docker-compose -f docker-compose.prod.yml exec -T postgres psql -U kantn -d kantnprojekt_db < /home/Kantnprojekt_Backend/services/web/project/backups/2021-03-23.dump
-	docker-compose -f docker-compose.prod.yml exec -T postgres psql -U kantn -d kantnprojekt_db < /home/Kantnprojekt_Backend/services/web/project/backups/2021-03-23.dump
-	docker-compose -f docker-compose.prod.yml exec -T postgres psql -U kantn -d kantnprojekt_db < /home/Kantnprojekt_Backend/services/web/project/backups/2021-03-23.dump
-	docker-compose -f docker-compose.prod.yml exec -T postgres psql -U kantn -d kantnprojekt_db < /home/Kantnprojekt_Backend/services/web/project/backups/2021-03-23.dump
-	docker-compose -f docker-compose.prod.yml exec -T postgres psql -U kantn -d kantnprojekt_db < /home/Kantnprojekt_Backend/services/web/project/backups/2021-03-23.dump
-	docker-compose -f docker-compose.prod.yml exec -T postgres psql -U kantn -d kantnprojekt_db < /home/Kantnprojekt_Backend/services/web/project/backups/2021-03-23.dump
+	# docker-compose -f docker-compose.prod.yml exec web python manage.py create_db
+	# docker-compose -f docker-compose.prod.yml exec -T postgres psql -U kantn -c "DROP DATABASE kantnprojekt_db WITH (FORCE);"
+	docker-compose -f docker-compose.prod.yml exec -T postgres psql -U kantn -d kantnprojekt_db < /home/Kantnprojekt_Backend/services/web/project/backups/2021-03-24-3.dump
+	docker-compose -f docker-compose.prod.yml exec -T postgres psql -U kantn -d kantnprojekt_db < /home/Kantnprojekt_Backend/services/web/project/backups/2021-03-24-3.dump
 
 restart:
 	docker-compose -f docker-compose.debug.yml down -v
 	docker-compose -f docker-compose.prod.yml down -v
 	docker-compose -f docker-compose.prod.yml up -d --build
 	# docker-compose -f docker-compose.prod.yml exec web python manage.py create_db
-	# docker-compose -f docker-compose.prod.yml exec -T postgres psql -U kantn -d kantnprojekt_db < /home/Kantnprojekt_Backend/services/web/project/backups/2020-12.21.dump
-	# docker-compose -f docker-compose.prod.yml exec -T postgres psql -U kantn -d kantnprojekt_db < /home/Kantnprojekt_Backend/services/web/project/backups/2020-12.21.dump
-	# docker-compose -f docker-compose.prod.yml exec -T postgres psql -U kantn -d kantnprojekt_db < /home/Kantnprojekt_Backend/services/web/project/backups/2020-12.21.dump
-	# docker-compose -f docker-compose.prod.yml exec -T postgres psql -U kantn -d kantnprojekt_db < /home/Kantnprojekt_Backend/services/web/project/backups/2020-12.21.dump
-	# docker-compose -f docker-compose.prod.yml exec -T postgres psql -U kantn -d kantnprojekt_db < /home/Kantnprojekt_Backend/services/web/project/backups/2020-12.21.dump
+	# docker-compose -f docker-compose.prod.yml exec -T postgres psql -U kantn -d kantnprojekt_db < /home/Kantnprojekt_Backend/services/web/project/backups/2021-07-09.dump
 	# docker-compose -f docker-compose.prod.yml exec web python manage.py add_missing_user_exercises
 	# docker-compose -f docker-compose.prod.yml exec web python manage.py start_kantnprojekt_december
 
@@ -48,6 +41,15 @@ deployment_v10:
 	docker-compose -f docker-compose.prod.yml exec -T postgres psql -U kantn -d kantnprojekt_db < /home/Kantnprojekt_Backend/services/web/project/backups/2021-03-23.dump
 	docker-compose -f docker-compose.prod.yml exec -T postgres psql -U kantn -d kantnprojekt_db < /home/Kantnprojekt_Backend/services/web/project/backups/2021-03-23.dump
 	docker-compose -f docker-compose.prod.yml exec web python manage.py add_missing_user_exercises
+
+deployment_v11:
+	docker-compose -f docker-compose.debug.yml down -v
+	docker-compose -f docker-compose.prod.yml down -v
+	docker-compose -f docker-compose.prod.yml up -d --build
+	docker-compose -f docker-compose.prod.yml exec web python manage.py drop_db
+	docker-compose -f docker-compose.prod.yml exec -T postgres psql -U kantn -d kantnprojekt_db < /home/Kantnprojekt_Backend/services/web/project/backups/2021-07-17.dump
+	
+	# docker-compose -f docker-compose.prod.yml exec web python manage.py add_missing_user_exercises
 
 
 
@@ -94,15 +96,6 @@ create_backup_docker:
 	docker-compose -f docker-compose.prod.yml exec postgres pg_dump -U kantn -d kantnprojekt_db > /home/Kantnprojekt_Backend/services/web/project/backups/backup.dump
 	
 
-debug_reuse:
-	# if containers are already running, shut them down so that api calls get to the newly created containers where we debug, not the old ones we don't observe. duh.
-	docker-compose -f docker-compose.debug.yml down -v
-	docker-compose -f docker-compose.prod.yml down -v
-	# creating and starting the containers
-	# docker-compose -f docker-compose.debug.yml run --rm --service-ports web gunicorn --reload --bind 0.0.0.0:8002 --timeout 3600 manage:app
-	# docker-compose -f docker-compose.debug.yml exec web python manage.py create_db
-	docker-compose -f docker-compose.debug.yml up -d
-
 # debug_upgrade_database:
 # 	# if containers are already running, shut them down so that api calls get to the newly created containers where we debug, not the old ones we don't observe. duh.
 # 	docker-compose -f docker-compose.debug.yml down -v
@@ -119,7 +112,7 @@ extract_docker_data_to_local:
 	# this is usefulif doing the dump from local database:
 	# export PGPASSWORD='password'; pg_dump -U kantn --host=localhost -d kantnprojekt > /home/Kantnprojekt_Backend/services/web/project/backups/backup.dump
 	# now make the backup from docker-container:
-	docker-compose -f docker-compose.debug.yml exec postgres pg_dump -U kantn -d kantnprojekt_db > /home/Kantnprojekt_Backend/services/web/project/backups/backup.dump
+	docker-compose -f docker-compose.prod.yml exec postgres pg_dump -U kantn -d kantnprojekt_db > /home/Kantnprojekt_Backend/services/web/project/backups/backup.dump
 	# now load the backup
 	# to do this, we need to delete the old database and re-create it. this can only be done by pgadmin. this user doesn't have a password, so we can only do it by switching the user with su
 	# furthermore, the current version (9.6) can't delete a db if there are active connections. Above version 11, the with FORCE command below would work, but I couldnt upgrade postgres as the apt-get command failed and new mirrors couldn't be added unfortunately..
@@ -133,6 +126,6 @@ extract_docker_data_to_local:
 	
 	# su postgres -c "dropdb kantnprojekt2"
 	su postgres -c "createdb -T template0 kantnprojekt2"
-	export PGPASSWORD='password'; psql -U kantn --host=localhost -d kantnprojekt2 < /home/Kantnprojekt_Backend/services/web/project/backups/backup.dump
-	# venv/bin/python3 services/web/manage.py restore_backup_dump --filename backup.dump
+	# export PGPASSWORD='password'; psql -U kantn --host=localhost -d kantnprojekt2 < /home/Kantnprojekt_Backend/services/web/project/backups/backup.dump
+	venv/bin/python3 services/web/manage.py restore_backup_dump --filename backup.dump
 	# now you can run Python:Flask debug settings in VS Code and start debugging

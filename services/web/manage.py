@@ -11,6 +11,7 @@ import datetime
 from pytz import timezone
 import os
 from debugger import initialize_flask_server_debugger_if_needed
+import logging
 
 initialize_flask_server_debugger_if_needed()
 
@@ -34,6 +35,7 @@ def result_dicts(rs):
 # @cli.command("print_user")
 @manager.command
 def start():
+    logging.info("start manage.py")
     db.create_all()
 
 @manager.command
@@ -45,14 +47,23 @@ def print_user():
 def print_workouts():
     result = result_dicts(Workout.query.all())
     print(result)
+
+@manager.command
+def drop_db():
+    logging.info("dropping db")
+    try:
+        db.drop_all()
+    except Exception as e:
+        logging.exception(e)
     
 
 @manager.command
 def create_db():
+    logging.info("manage.py: create_db")
     try:
         db.drop_all()
     except Exception as e:
-        print(e)
+        logging.exception(e)
     db.create_all()
     db.session.commit()
 
@@ -512,5 +523,7 @@ def seed_db():
         print(e)
 
 if __name__ == "__main__":
+    logging.debug("app-config:")
+    logging.debug(app.config)
     manager.run()
     # cli()
